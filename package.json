@@ -17,10 +17,10 @@
   "volo": {
     "baseUrl": "client/lib",
     "dependencies": {
-      "curl": "github:cujojs/curl/0.7.0",
-      "when": "github:cujojs/when/1.5.0",
-      "meld": "github:cujojs/meld/1.0.0",
-      "poly": "github:cujojs/poly/0.5.1"
+		"curl": "github:cujojs/curl/dev",
+		"when": "github:cujojs/when/1.5.0",
+		"meld": "github:cujojs/meld/1.0.0",
+		"poly": "github:cujojs/poly/0.5.1"
     }
   }
 }

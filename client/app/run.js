@@ -4,10 +4,8 @@
 	var config = {
 		baseUrl: '',
 		pluginPath: 'curl/plugin',
-		paths: {
-			curl: 'lib/curl/src/curl'
-		},
-		packages: [{"name":"wire","location":"lib/wire","main":"wire"},{"name":"when","location":"lib/when","main":"when"},{"name":"meld","location":"lib/meld","main":"meld"},{"name":"poly","location":"lib/poly","main":"./poly"}],
+		paths: {},
+		packages: [{"name":"wire","location":"lib/wire","main":"./wire"},{"name":"when","location":"lib/when","main":"when"},{"name":"meld","location":"lib/meld","main":"meld"},{"name":"poly","location":"lib/poly","main":"./poly"},{"name":"curl","location":"lib/curl/src/curl","main":"../curl"}],
 		preloads: ['poly/all']
 	};
 
