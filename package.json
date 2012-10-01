@@ -1,0 +1,26 @@
+{
+  "name": "goats",
+  "description": "The Monty Hall Problem",
+  "homepage": "",
+  "version": "0.1.0",
+  "keywords": [],
+  "dependencies": {
+    "express": ""
+  },
+  "devDependencies": {
+    "buster": "",
+    "grunt-buster": "",
+    "grunt-css": "",
+    "grunt-html": "",
+    "json5": ""
+  },
+  "volo": {
+    "baseUrl": "client/lib",
+    "dependencies": {
+      "curl": "github:cujojs/curl/0.7.0",
+      "when": "github:cujojs/when/1.5.0",
+      "meld": "github:cujojs/meld/1.0.0",
+      "poly": "github:cujojs/poly/0.5.1"
+    }
+  }
+}
