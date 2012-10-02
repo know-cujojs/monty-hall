@@ -12,8 +12,8 @@ define({
 			to: { $ref: 'doors' },
 			bindings: {
 				// TODO: data bindings
-				status: { selector: '', each: { $ref: 'classSingleton' } },
-				content: { selector: '.content', each: { $ref: 'classSingleton' } }
+				status: { selector: '', each: { $ref: 'statusClassHandler' } },
+				content: { selector: '.content', each: { $ref: 'contentClassHandler' } }
 
 			},
 			identifier: { module: 'app/selfLinkIdentifier' }
@@ -39,10 +39,17 @@ define({
 		bind: { to: { $ref: 'doors' } }
 	},
 
-	classSingleton: {
+	statusClassHandler: {
 		create: {
 			module: 'app/classSingleton',
 			args: ['closed', 'opened', 'selected']
+		}
+	},
+
+	contentClassHandler: {
+		create: {
+			module: 'app/classSingleton',
+			args: ['unknown', 'small-furry-animal']
 		}
 	},
 

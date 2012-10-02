@@ -20,7 +20,7 @@ define(function(require) {
 				return;
 			}
 
-			setNodeClasses = setClasses.bind(null, classes, String(propValue).toLowerCase());
+			setNodeClasses = setClasses.bind(null, classes, String(propValue).toLowerCase().replace(/[^a-zA-Z0-9]+/g, '-'));
 
 			if(node instanceof NodeList) {
 				forEach(node, setNodeClasses);
@@ -33,9 +33,11 @@ define(function(require) {
 
 	function setClasses(classesToRemove, classToAdd, node) {
 		classesToRemove.forEach(function(c) {
+			console.log('removing', c);
 			node.classList.remove(c);
 		});
 
+		console.log('adding', classToAdd);
 		node.classList.add(classToAdd);
 	}
 
