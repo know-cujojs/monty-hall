@@ -1,5 +1,12 @@
-.doors-view .doorway .content.small-furry-animal {
-	background-image: url(img/goat1.jpg);
+.doors-view .doorway .content {
 	background-position: 50% 50%;
 	background-repeat: no-repeat;
+}
+
+.doors-view .doorway .content.small-furry-animal {
+	background-image: url(img/goat1.jpg);
+}
+
+.doors-view .doorway .content.juergen {
+	background-image: url(img/car1.jpg);
 }

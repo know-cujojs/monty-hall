@@ -19,7 +19,8 @@ _(Nothing yet)_
 
 ## Photo Credits
 
-Goat photo (`goat1.jpg`) by [Tambako the Jaguar](http://www.flickr.com/photos/tambako/7619668692/)
+* Goat photo (goat1.jpg) by [Tambako the Jaguar](http://www.flickr.com/photos/tambako/7619668692/)
+* Lamborghini Aventador (car1.jpg) by [Autoviva.com](http://www.flickr.com/photos/autovivacom/5488708138/)
 
 ## License
 Copyright (c) 2012 VMware
