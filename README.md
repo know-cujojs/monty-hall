@@ -17,5 +17,9 @@ In lieu of a formal styleguide, take care to maintain the existing coding style.
 ## Release History
 _(Nothing yet)_
 
+## Photo Credits
+
+Goat photo (`goat1.jpg`) by [Tambako the Jaguar](http://www.flickr.com/photos/tambako/7619668692/)
+
 ## License
 Copyright (c) 2012 VMware

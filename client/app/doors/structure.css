@@ -6,6 +6,7 @@
 }
 
 .doors-view .doorway {
+	position: relative;
 	border: 1px solid black;
 	display: inline-block;
 	margin: 5px;
@@ -14,17 +15,30 @@
 	width: 30%;
 }
 
-.doors-view .door {
+.doors-view .doorway .door {
+	position: absolute;
 	left: 0;
 	top: 0;
-	background: red;
-	display: block;
 	margin: 0;
 	padding: 0;
 	height: 100%;
 	width: 100%;
+	background: red;
+	display: block;
 	-webkit-transition: -webkit-transform 1s ease;
 	-webkit-transform-origin: 0 75%;
+}
+
+.doors-view .doorway .content {
+	position: absolute;
+	left: 0;
+	top: 0;
+	margin: 0;
+	padding: 0;
+	height: 100%;
+	width: 100%;
+	display: block;
+	z-index: -1;
 }
 
 .doors-view .doorway.closed .door {

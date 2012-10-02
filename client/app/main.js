@@ -2,6 +2,8 @@ define({
 
 	root: { $ref: 'dom!game' },
 
+	theme: { module: 'css!theme/base.css' },
+
 	controller: {
 		create: 'app/controller',
 		on: {
@@ -43,7 +45,7 @@ define({
 			module: 'cola/adapter/Array',
 			args: [
 				[
-					{ links: [{ rel: 'self', href: 'http://foo.com/1' }], status: 'CLOSED', content: 'UNKNOWN' },
+					{ links: [{ rel: 'self', href: 'http://foo.com/1' }], status: 'CLOSED', content: 'SMALL_FURRY_ANIMAL' },
 					{ links: [{ rel: 'self', href: 'http://foo.com/2' }], status: 'CLOSED', content: 'UNKNOWN' },
 					{ links: [{ rel: 'self', href: 'http://foo.com/3' }], status: 'CLOSED', content: 'UNKNOWN' }
 				],
@@ -74,7 +76,7 @@ define({
 	contentClassHandler: {
 		create: {
 			module: 'app/classSingleton',
-			args: ['unknown', 'small-furry-animal']
+			args: ['unknown', 'small-furry-animal', 'juergen']
 		}
 	},
 
