@@ -25,7 +25,7 @@ define({
 			to: { $ref: 'doors' },
 			bindings: {
 				// TODO: data bindings
-				status: { selector: '', each: { $ref: 'statusClassHandler' } },
+				status: { handler: { $ref: 'statusClassHandler' } },
 				content: { selector: '.content', each: { $ref: 'contentClassHandler' } }
 
 			},
