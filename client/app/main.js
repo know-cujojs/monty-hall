@@ -9,7 +9,13 @@ define({
 			// css: { module: 'css!doors/structure.css' }
 		},
 		bind: {
-			to: { $ref: 'doors' }
+			to: { $ref: 'doors' },
+			bindings: {
+				// TODO: data bindings
+				status: ''
+			},
+			identifier: { module: 'app/selfLinkIdentifier' }
+
 		},
 		insert: { at: 'root' }
 	},
@@ -17,7 +23,17 @@ define({
 	doors: { create: 'cola/Hub' },
 
 	doorsAdapter: {
-		literal: [],
+		create: {
+			module: 'cola/adapter/Array',
+			args: [
+				[
+					{ links: [{ rel: 'self', href: 'http://foo.com/1' }], status: 'CLOSED' },
+					{ links: [{ rel: 'self', href: 'http://foo.com/2' }], status: 'CLOSED' },
+					{ links: [{ rel: 'self', href: 'http://foo.com/3' }], status: 'CLOSED' }
+				],
+				{ identifier: { module: 'app/selfLinkIdentifier' } }
+			]
+		},
 		bind: {
 			to: { $ref: 'doors' }
 		}
