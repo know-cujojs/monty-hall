@@ -23,7 +23,6 @@
 	padding: 0;
 	height: 100%;
 	width: 100%;
-	background: red;
 	display: block;
 	-webkit-transition: -webkit-transform 1s ease;
 	-webkit-transform-origin: 0 75%;

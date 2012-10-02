@@ -1,3 +1,7 @@
+body {
+	font-family: "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+}
+
 .doors-view .doorway .content {
 	background-position: 50% 50%;
 	background-repeat: no-repeat;
@@ -9,4 +13,39 @@
 
 .doors-view .doorway .content.juergen {
 	background-image: url(img/car1.jpg);
+}
+
+.doors-view .doorway .door {
+	background: yellow;
+}
+
+.doors-view .doorway .door:before {
+	position: absolute;
+	left: 0;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	margin: 0;
+	padding: 0;
+	display: block;
+	font-size: 18em;
+	text-align: center;
+	font-weight: bold;
+	content: '2';
+}
+
+.doors-view .doorway:first-child .door {
+	background: red;
+}
+
+.doors-view .doorway:first-child .door:before {
+	content: '1';
+}
+
+.doors-view .doorway:last-child .door {
+	background: blue;
+}
+
+.doors-view .doorway:last-child .door:before {
+	content: '3';
 }
