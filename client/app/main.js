@@ -31,7 +31,6 @@ define({
 			},
 			identifier: { $ref: 'selfLinkId' },
 			comparator: { $ref: 'byId' }
-
 		},
 		insert: { at: 'root' }
 	},
@@ -75,13 +74,6 @@ define({
 		create: {
 			module: 'app/classSingleton',
 			args: ['unknown', 'small-furry-animal']
-		}
-	},
-
-	setDoorState: {
-		create: {
-			module: 'wire/dom/transform/replaceClasses',
-			args: { group: 'open selected' }
 		}
 	},
 
