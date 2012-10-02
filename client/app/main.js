@@ -6,7 +6,8 @@ define({
 		create: 'app/controller',
 		on: {
 			doorsView: {
-				'click:.door,.doorway': 'doors.findItem | selectDoor'
+				'click:.door,.doorway': 'doors.findItem | selectDoor',
+				'dblclick:.door,.doorway': 'doors.findItem | _openDoor'
 			}
 		},
 		connect: {
