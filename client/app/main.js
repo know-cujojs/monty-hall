@@ -2,11 +2,23 @@ define({
 
 	root: { $ref: 'dom!game' },
 
+	controller: {
+		create: 'app/controller',
+		properties: {
+			doors: { $ref: 'doors' }
+		},
+		on: {
+			doorsView: {
+				'click:.door,.doorway': 'doors.findItem | selectDoor'
+			}
+		}
+	},
+
 	doorsView: {
 		render: {
-			template: { module: 'text!app/doors/template.html' }
+			template: { module: 'text!app/doors/template.html' },
 			// replace: { module: 'i18n!doors/strings' },
-			// css: { module: 'css!doors/structure.css' }
+			css: { module: 'css!app/doors/structure.css' }
 		},
 		bind: {
 			to: { $ref: 'doors' },
@@ -50,6 +62,13 @@ define({
 		create: {
 			module: 'app/classSingleton',
 			args: ['unknown', 'small-furry-animal']
+		}
+	},
+
+	setDoorState: {
+		create: {
+			module: 'wire/dom/transform/replaceClasses',
+			args: { group: 'open selected' }
 		}
 	},
 
