@@ -7,7 +7,6 @@
 
 .doors-view .doorway {
 	position: relative;
-	border: 1px solid black;
 	display: inline-block;
 	margin: 5px;
 	padding: 0;
@@ -19,23 +18,24 @@
 	position: absolute;
 	left: 0;
 	top: 0;
+	width: 100%;
+	height: 100%;
 	margin: 0;
 	padding: 0;
-	height: 100%;
-	width: 100%;
 	display: block;
 	-webkit-transition: -webkit-transform 1s ease;
 	-webkit-transform-origin: 0 75%;
+	box-shadow: 0 0 10px gray;
 }
 
 .doors-view .doorway .content {
 	position: absolute;
 	left: 0;
 	top: 0;
+	width: 100%;
+	height: 100%;
 	margin: 0;
 	padding: 0;
-	height: 100%;
-	width: 100%;
 	display: block;
 	z-index: -1;
 }
@@ -45,7 +45,7 @@
 }
 
 .doors-view .doorway.opened .door {
-	-webkit-transform: perspective(1000px) rotateY(85deg);
+	-webkit-transform: perspective(1000px) rotateY(-85deg);
 }
 
 .doors-view .doorway.selected .door {

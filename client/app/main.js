@@ -2,8 +2,6 @@ define({
 
 	root: { $ref: 'dom!game' },
 
-	theme: { module: 'css!theme/base.css' },
-
 	controller: {
 		create: 'app/controller',
 		on: {
@@ -79,6 +77,8 @@ define({
 			args: ['unknown', 'small-furry-animal', 'juergen']
 		}
 	},
+
+	theme: { module: 'css!theme/base.css' },
 
 	plugins: [
 		{ module: 'wire/debug' },

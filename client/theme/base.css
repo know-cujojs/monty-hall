@@ -2,17 +2,9 @@ body {
 	font-family: "Helvetica Neue", "Helvetica", "Arial", sans-serif;
 }
 
-.doors-view .doorway .content {
-	background-position: 50% 50%;
-	background-repeat: no-repeat;
-}
-
-.doors-view .doorway .content.small-furry-animal {
-	background-image: url(img/goat1.jpg);
-}
-
-.doors-view .doorway .content.juergen {
-	background-image: url(img/car1.jpg);
+.doors-view * {
+	border-top-left-radius: 50% 35%;
+	border-top-right-radius: 50% 35%;
 }
 
 .doors-view .doorway .door {
@@ -27,10 +19,10 @@ body {
 	bottom: 0;
 	margin: 0;
 	padding: 0;
-	display: block;
 	font-size: 18em;
 	text-align: center;
 	font-weight: bold;
+	display: block;
 	content: '2';
 }
 
@@ -48,4 +40,34 @@ body {
 
 .doors-view .doorway:last-child .door:before {
 	content: '3';
+}
+
+.doors-view .doorway .content {
+	background-color: #666;
+	background-position: 50% 50%;
+	background-repeat: no-repeat;
+	box-shadow: inset 0 0 40px black;
+}
+
+.doors-view .doorway .content.small-furry-animal {
+	background-image: url(img/goat1.jpg);
+}
+
+.doors-view .doorway .content.juergen {
+	background-image: url(img/car1.jpg);
+}
+
+/* TODO: Remove, don't really need this */
+.doors-view .doorway .content.unknown:before {
+	position: absolute;
+	left: 0;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	margin: 0;
+	padding: 0;
+	font-size: 18em;
+	text-align: center;
+	font-weight: bold;
+	content: '?';
 }
