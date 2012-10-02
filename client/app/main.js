@@ -4,13 +4,14 @@ define({
 
 	controller: {
 		create: 'app/controller',
-		properties: {
-			doors: { $ref: 'doors' }
-		},
 		on: {
 			doorsView: {
 				'click:.door,.doorway': 'doors.findItem | selectDoor'
 			}
+		},
+		connect: {
+			selectDoor: 'doors.update',
+			_openDoor: 'doors.update'
 		}
 	},
 
@@ -28,7 +29,8 @@ define({
 				content: { selector: '.content', each: { $ref: 'contentClassHandler' } }
 
 			},
-			identifier: { module: 'app/selfLinkIdentifier' }
+			identifier: { $ref: 'selfLinkId' },
+			comparator: { $ref: 'byId' }
 
 		},
 		insert: { at: 'root' }
@@ -45,10 +47,21 @@ define({
 					{ links: [{ rel: 'self', href: 'http://foo.com/2' }], status: 'CLOSED', content: 'UNKNOWN' },
 					{ links: [{ rel: 'self', href: 'http://foo.com/3' }], status: 'CLOSED', content: 'UNKNOWN' }
 				],
-				{ identifier: { module: 'app/selfLinkIdentifier' } }
+				{
+					identifier: { $ref: 'selfLinkId' },
+					comparator: { $ref: 'byId' }
+				}
 			]
 		},
 		bind: { to: { $ref: 'doors' } }
+	},
+
+	selfLinkId: { module: 'app/selfLinkIdentifier' },
+	byId: {
+		create: {
+			module: 'app/byId',
+			args: { $ref: 'selfLinkId' }
+		}
 	},
 
 	statusClassHandler: {
@@ -77,6 +90,7 @@ define({
 		{ module: 'wire/dom', classes: { init: 'loading' }},
 		{ module: 'wire/dom/render' },
 		{ module: 'wire/on' },
+		{ module: 'wire/connect' },
 		{ module: 'cola' }
 	]
 });

@@ -34,3 +34,7 @@
 .doors-view .doorway.opened .door {
 	-webkit-transform: perspective(1000px) rotateY(85deg);
 }
+
+.doors-view .doorway.selected .door {
+	box-shadow: 0 0 30px blue;
+}

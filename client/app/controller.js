@@ -3,8 +3,15 @@ define(function(require) {
 
 	return {
 		selectDoor: function(door) {
-			door.status = door.status === 'OPENED' ? 'CLOSED' : 'OPENED';
-			this.doors.update(door);
+			// TODO: Implement for real
+
+			// Just for fun
+			door.status = door.status !== 'SELECTED' ? 'SELECTED' : 'CLOSED';
+		},
+
+		_openDoor: function(door) {
+			// TODO: Implement for real
+			door.status = 'OPENED';
 		}
 	};
 
