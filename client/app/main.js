@@ -9,8 +9,8 @@ define({
 		},
 		on: {
 			doorsView: {
-				'click:.door,.doorway': 'doors.findItem | selectDoor',
-				'dblclick:.door,.doorway': 'doors.findItem | openDoor'
+				'click:.door,.doorway': 'doors.findItem | selectDoor'/*,
+				'dblclick:.door,.doorway': 'doors.findItem | openDoor'*/
 			}
 		},
 		ready: '_startGame'
@@ -25,7 +25,6 @@ define({
 		bind: {
 			to: { $ref: 'doors' },
 			bindings: {
-				// TODO: data bindings
 				status: { handler: { $ref: 'statusClassHandler' } },
 				content: { selector: '.content', each: { $ref: 'contentClassHandler' } }
 
@@ -89,8 +88,34 @@ define({
 
 	theme: { module: 'css!theme/base.css' },
 
+	oocssHandler: {
+		prototype: {},
+		properties: {
+			setGameStatus: { compose: 'controller.getStatus | setGameState' },
+			setGameState: { $ref: 'gameStateMapper' }
+		},
+		afterResolving: {
+			'controller._startGame': 'setGameStatus'
+		}
+	},
+
+	gameStateMapper: {
+		create: {
+			module: 'wire/dom/transform/mapClasses',
+			args: {
+				node: { $ref: 'root' },
+				map: {
+					AWAITING_INITIAL_SELECTION: 'awaiting-initial-selection' ,
+					AWAITING_FINAL_SELECTION: 'awaiting-final-selection',
+					WON: 'won',
+					LOST: 'lost'
+				}
+			}
+		}
+	},
+
 	plugins: [
-		// { module: 'wire/debug' },
+		//{ module: 'wire/debug', trace: true },
 		{ module: 'wire/dom', classes: { init: 'loading' }},
 		{ module: 'wire/dom/render' },
 		{ module: 'wire/on' },

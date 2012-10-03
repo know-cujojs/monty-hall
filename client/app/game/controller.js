@@ -29,6 +29,10 @@ define(function (require) {
 			return result;
 		},
 
+		getStatus: function () {
+			return this.game && this.game.status;
+		},
+
 		_doSelectDoor: function(door) {
 			return this._selectInitialDoor(door);
 		},
@@ -108,6 +112,7 @@ define(function (require) {
 		_updateDoorsData: function(doorData) {
 			console.log(doorData);
 			doorData.doors.forEach(this.doors.update);
+			return doorData;
 		},
 
 		_selectDoor: function(selectedDoor) {
