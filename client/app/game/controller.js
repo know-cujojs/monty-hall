@@ -1,7 +1,19 @@
 (function (define) {
 define(function (require) {
 
-	return;
+	return {
+
+		selectDoor: function (door) {
+			door.status = 'SELECTED';
+			return door;
+		},
+
+		openDoor: function (door) {
+			door.status = 'OPENED';
+			return door;
+		}
+
+	};
 
 });
 }(

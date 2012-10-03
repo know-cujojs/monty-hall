@@ -56,22 +56,34 @@ define({
 		bind: { to: { $ref: 'doors' } }
 	},
 
+	doorsData: {
+		literal: [
+			{ links: [{ rel: 'self', href: 'http://foo.com/1' }], status: 'CLOSED', content: 'SMALL_FURRY_ANIMAL' },
+			{ links: [{ rel: 'self', href: 'http://foo.com/2' }], status: 'CLOSED', content: 'JUERGEN' },
+			{ links: [{ rel: 'self', href: 'http://foo.com/3' }], status: 'CLOSED', content: 'UNKNOWN' }
+		],
+		bind: {
+			to: { $ref: 'doors' },
+			identifier: { $ref: 'selfLinkId' },
+			comparator: { $ref: 'byId' }
+		}
+	},
+
 	history: { create: 'cola/Hub' },
 
-	historyAdapter: {
-		create: {
-			module: 'cola/adapter/Array',
-			args: {
-				links: [ { rel: 'self', href: 'http://localhost:8080/monty-hall/games/2863629425905948275/history' } ],
-				events: [
-					'SELECTED_DOOR_ONE',
-					'REVEALED_DOOR_THREE',
-					'SELECTED_DOOR_TWO',
-					'WON'
-				]
-			}
+	historyData: {
+		literal: {
+			links: [ { rel: 'self', href: 'http://localhost:8080/monty-hall/games/2863629425905948275/history' } ],
+			events: [
+				'SELECTED_DOOR_ONE',
+				'REVEALED_DOOR_THREE',
+				'SELECTED_DOOR_TWO',
+				'WON'
+			]
 		},
-		bind: { to: { $ref: 'history' } }
+		bind: {
+			to: { $ref: 'history' }
+		}
 	},
 
 	selfLinkId: { module: 'app/selfLinkIdentifier' },
