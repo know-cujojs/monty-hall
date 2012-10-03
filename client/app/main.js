@@ -4,16 +4,16 @@ define({
 
 	controller: {
 		create: 'app/game/controller',
+		properties: {
+			doors: { $ref: 'doors' }
+		},
 		on: {
 			doorsView: {
 				'click:.door,.doorway': 'doors.findItem | selectDoor',
 				'dblclick:.door,.doorway': 'doors.findItem | openDoor'
 			}
 		},
-		after: {
-			selectDoor: 'doors.update',
-			openDoor: 'doors.update'
-		}
+		ready: '_startGame'
 	},
 
 	doorsView: {
@@ -39,11 +39,7 @@ define({
 	doors: { create: 'cola/Hub' },
 
 	doorsData: {
-		literal: [
-			{ links: [{ rel: 'self', href: 'http://foo.com/1' }], status: 'CLOSED', content: 'SMALL_FURRY_ANIMAL' },
-			{ links: [{ rel: 'self', href: 'http://foo.com/2' }], status: 'CLOSED', content: 'JUERGEN' },
-			{ links: [{ rel: 'self', href: 'http://foo.com/3' }], status: 'CLOSED', content: 'UNKNOWN' }
-		],
+		literal: [],
 		bind: {
 			to: { $ref: 'doors' },
 			identifier: { $ref: 'selfLinkId' },
@@ -94,7 +90,7 @@ define({
 	theme: { module: 'css!theme/base.css' },
 
 	plugins: [
-		{ module: 'wire/debug' },
+		// { module: 'wire/debug' },
 		{ module: 'wire/dom', classes: { init: 'loading' }},
 		{ module: 'wire/dom/render' },
 		{ module: 'wire/on' },
