@@ -5,16 +5,16 @@ define({
 	theme: { module: 'css!theme/base.css' },
 
 	controller: {
-		create: 'app/controller',
+		create: 'app/game/controller',
 		on: {
 			doorsView: {
 				'click:.door,.doorway': 'doors.findItem | selectDoor',
-				'dblclick:.door,.doorway': 'doors.findItem | _openDoor'
+				'dblclick:.door,.doorway': 'doors.findItem | openDoor'
 			}
 		},
 		connect: {
 			selectDoor: 'doors.update',
-			_openDoor: 'doors.update'
+			openDoor: 'doors.update'
 		}
 	},
 
@@ -58,7 +58,26 @@ define({
 		bind: { to: { $ref: 'doors' } }
 	},
 
+	history: { create: 'cola/Hub' },
+
+	historyAdapter: {
+		create: {
+			module: 'cola/adapter/Array',
+			args: {
+				links: [ { rel: 'self', href: 'http://localhost:8080/monty-hall/games/2863629425905948275/history' } ],
+				events: [
+					'SELECTED_DOOR_ONE',
+					'REVEALED_DOOR_THREE',
+					'SELECTED_DOOR_TWO',
+					'WON'
+				]
+			}
+		},
+		bind: { to: { $ref: 'history' } }
+	},
+
 	selfLinkId: { module: 'app/selfLinkIdentifier' },
+
 	byId: {
 		create: {
 			module: 'app/byId',
