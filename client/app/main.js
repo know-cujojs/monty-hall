@@ -2,8 +2,6 @@ define({
 
 	root: { $ref: 'dom!game' },
 
-	theme: { module: 'css!theme/base.css' },
-
 	controller: {
 		create: 'app/game/controller',
 		on: {
@@ -46,7 +44,7 @@ define({
 			args: [
 				[
 					{ links: [{ rel: 'self', href: 'http://foo.com/1' }], status: 'CLOSED', content: 'SMALL_FURRY_ANIMAL' },
-					{ links: [{ rel: 'self', href: 'http://foo.com/2' }], status: 'CLOSED', content: 'UNKNOWN' },
+					{ links: [{ rel: 'self', href: 'http://foo.com/2' }], status: 'CLOSED', content: 'JUERGEN' },
 					{ links: [{ rel: 'self', href: 'http://foo.com/3' }], status: 'CLOSED', content: 'UNKNOWN' }
 				],
 				{
@@ -98,6 +96,8 @@ define({
 			args: ['unknown', 'small-furry-animal', 'juergen']
 		}
 	},
+
+	theme: { module: 'css!theme/base.css' },
 
 	plugins: [
 		{ module: 'wire/debug' },
