@@ -10,7 +10,7 @@ define({
 				'dblclick:.door,.doorway': 'doors.findItem | openDoor'
 			}
 		},
-		connect: {
+		after: {
 			selectDoor: 'doors.update',
 			openDoor: 'doors.update'
 		}
@@ -98,7 +98,7 @@ define({
 		{ module: 'wire/dom', classes: { init: 'loading' }},
 		{ module: 'wire/dom/render' },
 		{ module: 'wire/on' },
-		{ module: 'wire/connect' },
+		{ module: 'wire/aop' },
 		{ module: 'cola' }
 	]
 });
