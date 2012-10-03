@@ -38,24 +38,6 @@ define({
 
 	doors: { create: 'cola/Hub' },
 
-	doorsAdapter: {
-		create: {
-			module: 'cola/adapter/Array',
-			args: [
-				[
-					{ links: [{ rel: 'self', href: 'http://foo.com/1' }], status: 'CLOSED', content: 'SMALL_FURRY_ANIMAL' },
-					{ links: [{ rel: 'self', href: 'http://foo.com/2' }], status: 'CLOSED', content: 'JUERGEN' },
-					{ links: [{ rel: 'self', href: 'http://foo.com/3' }], status: 'CLOSED', content: 'UNKNOWN' }
-				],
-				{
-					identifier: { $ref: 'selfLinkId' },
-					comparator: { $ref: 'byId' }
-				}
-			]
-		},
-		bind: { to: { $ref: 'doors' } }
-	},
-
 	doorsData: {
 		literal: [
 			{ links: [{ rel: 'self', href: 'http://foo.com/1' }], status: 'CLOSED', content: 'SMALL_FURRY_ANIMAL' },
