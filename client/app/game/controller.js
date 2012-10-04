@@ -71,17 +71,18 @@ define(function (require) {
 			doors = this.doors;
 
 			return this._createGame()
-			.then(function(gameMeta) {
-				// extract Location header
-				var gameUrl = '';
-				return self._getGame(gameUrl);
-			}).then(function(game) {
+			.then(function(game) {
 				self.game = game;
 				return self._getDoors();
 			}).then(this._updateDoorsData.bind(this));
 		},
 
 		_createGame: function() {
+			// TODO: Figure out how to avoid passing the method
+			return this._doCreateGame({ method: 'POST' });
+		},
+
+		_doCreateGame: function() {
 			return when.resolve({
 				headers: {
 					Location: 'blah'
@@ -110,7 +111,6 @@ define(function (require) {
 		},
 
 		_updateDoorsData: function(doorData) {
-			console.log(doorData);
 			doorData.doors.forEach(this.doors.update);
 			return doorData;
 		},

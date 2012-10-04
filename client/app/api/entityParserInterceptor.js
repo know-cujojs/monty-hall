@@ -1,20 +1,23 @@
 (function(define) {
 define(function(require) {
 
-	var createInterceptor = require('rest-template/interceptor/_base');
+	var when = require('when');
 
-	return function entityParserInterceptor(client, parseEntity) {
-
-		return createInterceptor({
-			response: function(response, config) {
-				if(!('entity' in response)) {
-					return response;
-				}
-
-				return parseEntity(response.entity);
-			}
-		});
+	return function(client, config) {
+		return function(request) {
+			return when(client(request), function(response) {
+				return parseResponse(config.entityParser, response);
+			});
+		};
 	};
+
+	function parseResponse(parser, response) {
+		if(response && response.entity != null) {
+			return parser.parseEntity(response.entity);
+		}
+
+		return response;
+	}
 
 });
 })(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(require); });

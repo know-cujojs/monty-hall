@@ -15,7 +15,7 @@ define(function(require) {
 			}
 		});
 
-		interceptor = entityParserInterceptor(client, parser.parseEntity.bind(parser));
+		interceptor = entityParserInterceptor(client, { entityParser: parser });
 
 		return parser;
 

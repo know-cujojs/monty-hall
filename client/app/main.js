@@ -5,7 +5,8 @@ define({
 	controller: {
 		create: 'app/game/controller',
 		properties: {
-			doors: { $ref: 'doors' }
+			doors: { $ref: 'doors' },
+			_doCreateGame: { $ref: 'gameClient' }
 		},
 		on: {
 			doorsView: {
@@ -13,7 +14,34 @@ define({
 				'dblclick:.door,.doorway': 'doors.findItem | openDoor'*/
 			}
 		},
+		afterResolving: {
+			'_startGame': 'getStatus | oocssHandler.setGameState'
+		},
 		ready: '_startGame'
+	},
+
+	baseClient: { $ref: 'client!http://monty-hall.cloudfoundry.com/games', entity: false },
+
+	entityParser: {
+		create: {
+			module: 'app/api/entityParser',
+			args: { $ref: 'baseClient' }
+		}
+	},
+
+	gameClient: {
+		create: {
+			module: 'app/api/entityParserInterceptor',
+			args: [
+				{
+					create: {
+						module: 'app/api/createThenGetInterceptor',
+						args: { $ref: 'baseClient' }
+					}
+				},
+				{ entityParser: { $ref: 'entityParser'} }
+			]
+		}
 	},
 
 	doorsView: {
@@ -89,13 +117,9 @@ define({
 	theme: { module: 'css!theme/base.css' },
 
 	oocssHandler: {
-		prototype: {},
+		literal: {},
 		properties: {
-			setGameStatus: { compose: 'controller.getStatus | setGameState' },
 			setGameState: { $ref: 'gameStateMapper' }
-		},
-		afterResolving: {
-			'controller._startGame': 'setGameStatus'
 		}
 	},
 
@@ -115,11 +139,12 @@ define({
 	},
 
 	plugins: [
-		//{ module: 'wire/debug', trace: true },
+		{ module: 'wire/debug', trace: { filter: '_startGame' } },
 		{ module: 'wire/dom', classes: { init: 'loading' }},
 		{ module: 'wire/dom/render' },
 		{ module: 'wire/on' },
 		{ module: 'wire/aop' },
+		{ module: 'rest-template/wire' },
 		{ module: 'cola' }
 	]
 });
