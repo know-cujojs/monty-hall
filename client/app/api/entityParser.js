@@ -1,11 +1,9 @@
 (function(define) {
 define(function(require) {
 
-	var hasOwn, createInterceptor, when, entityParser;
+	var hasOwn, entityParserInterceptor, entityParser;
 
-	when = require('when');
-	createInterceptor = require('rest-template/interceptor/_base');
-
+	entityParserInterceptor = require('./entityParserInterceptor');
 	hasOwn = Object.prototype.hasOwnProperty.call.bind(Object.prototype.hasOwnProperty);
 
 	function createEntityParser(client) {
@@ -17,7 +15,7 @@ define(function(require) {
 			}
 		});
 
-		interceptor = entityParserInterceptor(client, parser);
+		interceptor = entityParserInterceptor(client, parser.parseEntity.bind(parser));
 
 		return parser;
 
@@ -26,7 +24,6 @@ define(function(require) {
 				return interceptor({ path: url });
 			};
 		}
-
 	}
 
 	entityParser = {
@@ -71,19 +68,6 @@ define(function(require) {
 	};
 
 	return createEntityParser;
-
-	function entityParserInterceptor(client, parser) {
-
-		return createInterceptor({
-			response: function(response, config) {
-				if(!('entity' in response)) {
-					return response;
-				}
-
-				return parser.parseEntity(response.entity);
-			}
-		});
-	}
 
 });
 })(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(require); });
