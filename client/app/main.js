@@ -13,9 +13,6 @@ define({
 				'dblclick:.door,.doorway': 'doors.findItem | openDoor'*/
 			}
 		},
-		afterResolving: {
-			'_startGame': 'getStatus | oocssHandler.setGameState'
-		},
 		ready: '_startGame'
 	},
 
@@ -94,8 +91,15 @@ define({
 	oocssHandler: {
 		literal: {},
 		properties: {
-			setGameState: { $ref: 'gameStateMapper' }
-		}
+			setGameState: { compose: 'controller.getStatus | gameStateMapper' }
+		},
+		afterResolving: {
+			'controller._startGame': 'setGameState'
+		},
+		// we need to also run setGameState at init since the
+		// controller's ready may be called before our
+		// afterResolving advice is applied
+		ready: 'setGameState'
 	},
 
 	gameStateMapper: {
