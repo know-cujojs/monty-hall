@@ -5,6 +5,7 @@
   "version": "0.1.0",
   "keywords": [],
   "dependencies": {
+  	"rest-template": "",
     "express": ""
   },
   "devDependencies": {
@@ -17,10 +18,11 @@
   "volo": {
     "baseUrl": "client/lib",
     "dependencies": {
-		"curl": "github:cujojs/curl/dev",
-		"when": "github:cujojs/when/1.5.0",
-		"meld": "github:cujojs/meld/1.0.0",
-		"poly": "github:cujojs/poly/0.5.1"
+      "curl": "github:cujojs/curl/dev",
+      "when": "github:cujojs/when/1.5.0",
+      "meld": "github:cujojs/meld/1.0.0",
+      "poly": "github:cujojs/poly/0.5.1",
+      "rest": "github:scothis/rest/v0.7.5"
     }
   }
 }
