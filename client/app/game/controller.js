@@ -41,6 +41,8 @@ define(function (require) {
 			return this._selectDoor(door).then(function(selectedDoor) {
 				// this._getDoors().then(console.log.bind(console));
 				this._getDoors().then(this._updateDoorsData.bind(this));
+				// TODO: this probably isn't the right place for this:
+				this.game.status = 'AWAITING_FINAL_SELECTION';
 				return door;
 			}.bind(this));
 		},
@@ -51,7 +53,14 @@ define(function (require) {
 			}
 
 			// TODO: Fake, remove this
-			door.content = Math.random() >= 0.5 ? 'JUERGEN' : 'SMALL_FURRY_ANIMAL';
+			if (Math.random() >= 0.5) {
+				door.content = 'JUERGEN';
+				this.game.status = 'WON';
+			}
+			else {
+				door.content = 'SMALL_FURRY_ANIMAL';
+				this.game.status = 'LOST';
+			}
 
 			return this._openDoor(door).then(function(openedDoor) {
 				this._getDoors().then(this._updateDoorsData.bind(this));
@@ -110,7 +119,6 @@ define(function (require) {
 		},
 
 		_updateDoorsData: function(doorData) {
-			console.log(doorData);
 			doorData.doors.forEach(this.doors.update);
 			return doorData;
 		},

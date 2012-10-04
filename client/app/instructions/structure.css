@@ -1,0 +1,23 @@
+.instructions dt {
+	display: none;
+}
+
+.instructions dd {
+	display: none;
+}
+
+.awaiting-initial-selection .pick-first-step {
+	display: block;
+}
+
+.awaiting-final-selection .stay-or-switch-step {
+	display: block;
+}
+
+.won .won-step {
+	display: block;
+}
+
+.lost .lost-step {
+	display: block;
+}
