@@ -13,6 +13,9 @@ define({
 				'dblclick:.door,.doorway': 'doors.findItem | openDoor'*/
 			}
 		},
+		afterResolving: {
+			'_startGame': 'getStatus | oocssHandler.setGameState'
+		},
 		ready: '_startGame'
 	},
 
@@ -89,13 +92,9 @@ define({
 	theme: { module: 'css!theme/base.css' },
 
 	oocssHandler: {
-		prototype: {},
+		literal: {},
 		properties: {
-			setGameStatus: { compose: 'controller.getStatus | setGameState' },
 			setGameState: { $ref: 'gameStateMapper' }
-		},
-		afterResolving: {
-			'controller._startGame': 'setGameStatus'
 		}
 	},
 
