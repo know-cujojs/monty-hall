@@ -17,7 +17,9 @@ define({
 		ready: '_startGame'
 	},
 
-	baseClient: { $ref: 'client!http://monty-hall.cloudfoundry.com/games', entity: false },
+	// FIXME: Change back to https://monty-hall.cloudfoundry.com/games onces
+	// CORS is working
+	baseClient: { $ref: 'client!/games', entity: false },
 
 	entityParser: {
 		create: {
