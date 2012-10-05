@@ -1,6 +1,31 @@
 define({
 
-	root: { $ref: 'dom!game' },
+	root: {
+		render: {
+			template: { module: 'text!app/container/template.html' }
+			//replace: { module: 'i18n!app/container/strings' },
+			//css: { module: 'css!app/container/structure.css' }
+		},
+		insert: { last: { $ref: 'dom.first!body' } }
+	},
+
+	gameView: {
+		render: {
+			template: { module: 'text!app/game/template.html' }
+			//replace: { module: 'i18n!app/game/strings' },
+			//css: { module: 'css!app/game/structure.css' }
+		},
+		insert: { last: 'root' }
+	},
+
+	instructionsView: {
+		render: {
+			template: { module: 'text!app/instructions/template.html' },
+			replace: { module: 'i18n!app/instructions/strings' },
+			css: { module: 'css!app/instructions/structure.css' },
+			at: { $ref: 'dom.first!.instructions', at: 'gameView' }
+		}
+	},
 
 	controller: {
 		create: 'app/game/controller',
@@ -47,7 +72,8 @@ define({
 		render: {
 			template: { module: 'text!app/doors/template.html' },
 			// replace: { module: 'i18n!doors/strings' },
-			css: { module: 'css!app/doors/structure.css' }
+			css: { module: 'css!app/doors/structure.css' },
+			at: { $ref: 'dom.first!.doors', at: 'gameView' }
 		},
 		bind: {
 			to: { $ref: 'doors' },
@@ -58,8 +84,7 @@ define({
 			},
 			identifier: { $ref: 'selfLinkId' },
 			comparator: { $ref: 'byId' }
-		},
-		insert: { at: 'root' }
+		}
 	},
 
 	doors: { create: 'cola/Hub' },
@@ -121,11 +146,13 @@ define({
 			setGameState: { compose: 'controller.getStatus | gameStateMapper' }
 		},
 		afterResolving: {
-			'controller._startGame': 'setGameState'
+			'controller._startGame': 'setGameState',
+			'controller._selectInitialDoor': 'setGameState',
+			'controller._switchOrStay': 'setGameState'
 		},
-		// we need to also run setGameState at init since the
-		// controller's ready may be called before our
-		// afterResolving advice is applied
+		// we need to run setGameState at "ready" since the
+		// controller's "ready" may be called before our
+		// "afterResolving" advice is applied
 		ready: 'setGameState'
 	},
 
@@ -145,7 +172,7 @@ define({
 	},
 
 	plugins: [
-		{ module: 'wire/debug', trace: true },
+//		{ module: 'wire/debug' },
 		{ module: 'wire/dom', classes: { init: 'loading' }},
 		{ module: 'wire/dom/render' },
 		{ module: 'wire/on' },
