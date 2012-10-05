@@ -12,12 +12,22 @@ define(function(require) {
 		parser = Object.create(entityParser, {
 			_createGetter: {
 				value: createGetter
+			},
+			_createUpdater: {
+				value: createUpdater
 			}
 		});
 
 		interceptor = entityParserInterceptor(client, { entityParser: parser });
 
 		return parser;
+
+		function createUpdater() {
+			return function(data) {
+				var url = data.links[0].href;
+				return interceptor({ method: 'PUT', path: url, entity: data });
+			};
+		}
 
 		function createGetter(url) {
 			return function() {
@@ -55,10 +65,15 @@ define(function(require) {
 
 				name = link.rel;
 
+				if(name === 'self') {
+					entity.update = this._createUpdater();
+				}
+
 				if(!hasOwn(entity, name)) {
 					entity[name] = {
 						href: link.href,
-						get: this._createGetter(link.href)
+						get: this._createGetter(link.href),
+						update: this._createUpdater()
 					};
 				}
 

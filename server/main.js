@@ -1,5 +1,5 @@
 /*jshint es5:true, node:true*/
-var http, express, path, host, port, app, httpProxy, proxy, proxyHost;
+var http, express, path, host, port, app, httpProxy, proxy, proxyHost, replace;
 
 http = require('http');
 express = require('express');
@@ -12,6 +12,7 @@ port = 8000;
 app = express();
 proxy = new httpProxy.RoutingProxy();
 proxyHost = 'monty-hall.cloudfoundry.com';
+replace = new RegExp('http://' + proxyHost + '.*/games/');
 
 app.configure(function() {
 	app.use(app.router);
@@ -27,7 +28,7 @@ app.all('/games', proxyRequest);
 app.all('/games/*', proxyRequest);
 
 function proxyRequest(req, res) {
-	req.url = req.url.replace('http://' + proxyHost + '/games', '');
+	req.url = req.url.replace(replace, '');
 
 	req.headers.host = proxyHost;
 	

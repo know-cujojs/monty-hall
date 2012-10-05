@@ -82,6 +82,8 @@ define(function (require) {
 			return this._createGame()
 			.then(function(game) {
 				self.game = game;
+				self._getDoors = game.doors.get;
+				self._getGame = game.self.get;
 				return self._getDoors();
 			}).then(this._updateDoorsData.bind(this));
 		},
@@ -92,31 +94,31 @@ define(function (require) {
 		},
 
 		_doCreateGame: function() {
-			return when.resolve({
-				headers: {
-					Location: 'blah'
-				}
-			});
+			// return when.resolve({
+			// 	headers: {
+			// 		Location: 'blah'
+			// 	}
+			// });
 		},
 
 		_getGame: function(url) {
-			return when.resolve({
-				"links": [
-					{"rel":"self","href":"http://localhost:8080/monty-hall/games/2863629425905948275"},
-					{"rel":"doors","href":"http://localhost:8080/monty-hall/games/2863629425905948275/doors"},
-					{"rel":"history","href":"http://localhost:8080/monty-hall/games/2863629425905948275/history"}
-				],
-				"status":"AWAITING_INITIAL_SELECTION"
-			});
+			// return when.resolve({
+			// 	"links": [
+			// 		{"rel":"self","href":"http://localhost:8080/monty-hall/games/2863629425905948275"},
+			// 		{"rel":"doors","href":"http://localhost:8080/monty-hall/games/2863629425905948275/doors"},
+			// 		{"rel":"history","href":"http://localhost:8080/monty-hall/games/2863629425905948275/history"}
+			// 	],
+			// 	"status":"AWAITING_INITIAL_SELECTION"
+			// });
 		},
 
 		_getDoors: function() {
-			return when.resolve({
-				"links": [
-					{"rel":"self","href":"http://localhost:8080/monty-hall/games/2863629425905948275/doors"}
-				],
-				"doors": doorData
-			});
+			// return when.resolve({
+			// 	"links": [
+			// 		{"rel":"self","href":"http://localhost:8080/monty-hall/games/2863629425905948275/doors"}
+			// 	],
+			// 	"doors": doorData
+			// });
 		},
 
 		_updateDoorsData: function(doorData) {
@@ -125,20 +127,30 @@ define(function (require) {
 		},
 
 		_selectDoor: function(selectedDoor) {
+			var self = this;
+
 			selectedDoor.status = "SELECTED";
 
-			try {
-				this.doors.forEach(function(door) {
-					if(door !== selectedDoor) {
-						throw door;
-					}
+			return this.game.doors.update(selectedDoor)
+			.then(function(door) {
+				return self._getGame().then(function(game) {
+					self.game = game;
+					return door;
 				});
-			} catch(door) {
-				door.content = "SMALL_FURRY_ANIMAL";
-				door.status = 'OPENED';
-			}
+			});
+	
+			// try {
+			// 	this.doors.forEach(function(door) {
+			// 		if(door !== selectedDoor) {
+			// 			throw door;
+			// 		}
+			// 	});
+			// } catch(door) {
+			// 	door.content = "SMALL_FURRY_ANIMAL";
+			// 	door.status = 'OPENED';
+			// }
 
-			return when.resolve(selectedDoor);
+			// return when.resolve(selectedDoor);
 		}
 
 	};
