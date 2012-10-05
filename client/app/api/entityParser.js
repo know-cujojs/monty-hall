@@ -1,10 +1,15 @@
 (function(define) {
 define(function(require) {
 
-	var hasOwn, entityParserInterceptor, entityParser;
+	var hasOwn, entityParserInterceptor, entityParser, serializers, defaultSerializer;
 
 	entityParserInterceptor = require('./entityParserInterceptor');
 	hasOwn = Object.prototype.hasOwnProperty.call.bind(Object.prototype.hasOwnProperty);
+	defaultSerializer = createSerializer(withoutLinks);
+
+	serializers = {
+		doors: createSerializer(doorFields)
+	};
 
 	function createEntityParser(client) {
 		var parser, interceptor;
@@ -22,10 +27,16 @@ define(function(require) {
 
 		return parser;
 
-		function createUpdater() {
+		function createUpdater(type) {
+			var serializer = serializers[type] || defaultSerializer;
+
 			return function(data) {
 				var url = data.links[0].href;
-				return interceptor({ method: 'PUT', path: url, entity: data });
+				return interceptor({
+					method: 'PUT',
+					path: url,
+					entity: serializer(data)
+				});
 			};
 		}
 
@@ -37,6 +48,7 @@ define(function(require) {
 	}
 
 	entityParser = {
+
 		parseEntity: function(data) {
 			var entity = {};
 
@@ -65,15 +77,11 @@ define(function(require) {
 
 				name = link.rel;
 
-				if(name === 'self') {
-					entity.update = this._createUpdater();
-				}
-
 				if(!hasOwn(entity, name)) {
 					entity[name] = {
 						href: link.href,
 						get: this._createGetter(link.href),
-						update: this._createUpdater()
+						update: this._createUpdater(name)
 					};
 				}
 
@@ -81,6 +89,25 @@ define(function(require) {
 			}.bind(this), entity);
 		}
 	};
+
+	function createSerializer(filterKeys) {
+		return function(entity) {
+			return Object.keys(entity).filter(filterKeys)
+				.reduce(function(serialized, key) {
+					serialized[key] = entity[key];
+					return serialized;
+				},
+			{});
+		};
+	}
+
+	function doorFields(key) {
+		return key === 'status';
+	}
+
+	function withoutLinks(key) {
+		return key !== 'links';
+	}
 
 	return createEntityParser;
 

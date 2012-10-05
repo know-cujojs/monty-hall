@@ -29,16 +29,13 @@
  *
  */
 (function (global, doc, testGlobalVar) {
-define(/*=='curl/plugin/js',==*/ ['curl/_privileged'], function (priv) {
+define(/*=='js',==*/ ['curl/_privileged'], function (priv) {
 "use strict";
 	var cache = {},
 		queue = [],
 		supportsAsyncFalse = doc && doc.createElement('script').async == true,
-		Promise,
 		waitForOrderedScript,
 		undef;
-
-	Promise = priv['Promise'];
 
 	function nameWithExt (name, defaultExt) {
 		return name.lastIndexOf('.') <= name.lastIndexOf('/') ?
@@ -105,10 +102,10 @@ define(/*=='curl/plugin/js',==*/ ['curl/_privileged'], function (priv) {
 					// go get it (from cache hopefully)
 					fetch.apply(null, next);
 				}
-				promise.resolve(def.resolved || true);
+				promise['resolve'](def.resolved || true);
 			},
 			function (ex) {
-				promise.reject(ex);
+				promise['reject'](ex);
 			}
 		);
 
@@ -121,44 +118,34 @@ define(/*=='curl/plugin/js',==*/ ['curl/_privileged'], function (priv) {
 
 		'load': function (name, require, callback, config) {
 
-			var order, exportsPos, exports, prefetch, url, def, promise;
+			var order, exportsPos, exports, prefetch, def, promise;
 
 			order = name.indexOf('!order') > 0; // can't be zero
 			exportsPos = name.indexOf('!exports=');
 			exports = exportsPos > 0 && name.substr(exportsPos + 9); // must be last option!
 			prefetch = 'prefetch' in config ? config['prefetch'] : true;
 			name = order || exportsPos > 0 ? name.substr(0, name.indexOf('!')) : name;
-			url = require['toUrl'](nameWithExt(name, 'js'));
-
-			function reject (ex) {
-				(callback['error'] || function (ex) { throw ex; })(ex);
-			}
 
 			// if we've already fetched this resource, get it out of the cache
-			if (url in cache) {
-				if (cache[url] instanceof Promise) {
-					cache[url].then(callback, reject);
-				}
-				else {
-					callback(cache[url]);
-				}
+			if (name in cache) {
+				callback(cache[name]);
 			}
 			else {
+				cache[name] = undef;
 				def = {
 					name: name,
-					url: url,
+					url: require['toUrl'](nameWithExt(name, 'js')),
 					order: order,
 					exports: exports,
 					timeoutMsec: config['timeout']
 				};
-				cache[url] = promise = new Promise();
-				promise.then(
-					function (o) {
-						cache[url] = o;
-						callback(o);
+				promise = {
+					'resolve': function (o) {
+						cache[name] = o;
+						(callback['resolve'] || callback)(o);
 					},
-					reject
-				);
+					'reject': callback['reject'] || function (ex) { throw ex; }
+				};
 
 				// if this script has to wait for another
 				// or if we're loading, but not executing it

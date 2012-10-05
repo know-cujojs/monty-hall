@@ -20,7 +20,7 @@
  * TODO: use "../domReady" instead of "curl/domReady" when curl's make.sh is updated to use cram
  */
 
-define(/*=='curl/plugin/domReady',==*/ ['../domReady'], function (domReady) {
+define(/*=='domReady',==*/ ['curl/domReady'], function (domReady) {
 
 	return {
 

@@ -1,5 +1,4 @@
-#!/usr/bin/env bash
-
+#!/bin/sh
 # make simple, compiled curl.js
 ./make.sh ../dist/curl/curl.js ../src/curl.js
 

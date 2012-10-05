@@ -70,7 +70,7 @@
 		return url.replace(isProtocolRelativeRx, protocol + '//');
 	}
 
-	define(/*=='curl/plugin/link',==*/ {
+	define(/*=='link',==*/ {
 
 //		'normalize': function (resourceId, toAbsId) {
 //			// remove options
