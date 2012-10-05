@@ -5,7 +5,17 @@
 		baseUrl: '',
 		pluginPath: 'curl/plugin',
 		paths: {},
-		packages: [{"name":"cola","location":"lib/cola","main":"./cola"},{"name":"wire","location":"lib/wire","main":"./wire"},{"name":"when","location":"lib/when","main":"when"},{"name":"meld","location":"lib/meld","main":"meld"},{"name":"poly","location":"lib/poly","main":"./poly"},{"name":"curl","location":"lib/curl/src/curl","main":"../curl"},{"name":"rest","location":"lib/rest","main":"./rest"},{"name":"0.6","location":"lib/0.6","main":"./src/curl"}],
+		packages: [
+			{ name: 'clicks', location: 'lib/clicks', main: 'clicks' },
+			{ name: 'cola', location: 'lib/cola', main: './cola' },
+			{ name: 'curl', location: 'lib/curl/src/curl', main: '../curl' },
+			{ name: 'integration', location: 'lib/integration', main: 'integration' },
+			{ name: 'meld', location: 'lib/meld', main: 'meld' },
+			{ name: 'poly', location: 'lib/poly', main: './poly' },
+			{ name: 'rest', location: 'lib/rest', main: 'rest' },
+			{ name: 'when', location: 'lib/when', main: 'when' },
+			{ name: 'wire', location: 'lib/wire', main: './wire' }
+		],
 		preloads: ['poly/all']
 	};
 

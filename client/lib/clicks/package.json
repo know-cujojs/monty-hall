@@ -1,0 +1,39 @@
+{
+	"name": "clicks",
+	"version": "0.0.1",
+	"description": "",
+	"keywords": ["click", "steam", "clickstream"],
+	"licenses": [
+		{
+			"type": "MIT",
+			"url": "http://www.opensource.org/licenses/mit-license.php"
+		}
+	],
+	"repositories": [
+		{
+			"type": "git",
+			"url": "https://github.com/five-eleven/clicks"
+		}
+	],
+	"bugs": "https://github.com/five-eleven/clicks/issues",
+	"maintainers": [
+		{
+			"name": "Scott Andrews",
+			"web": "http://twitter.com/scothis"
+		}
+	],
+	"dependencies": {
+	},
+	"devDependencies": {
+		"curl": "https://github.com/scothis/curl/tarball/npm-version",
+		"buster": "",
+		"grunt": "",
+		"grunt-buster": "",
+		"json5": "0.1.0"
+	},
+	"main": "./clicks",
+	"scripts": {
+		"test": "grunt --no-color",
+		"start": "buster static"
+	}
+}
