@@ -6,21 +6,23 @@ define(function(require) {
 	when = require('when');
 
 	doorData = [
-		{"links":[{"rel":"self","href":"http://localhost:8080/monty-hall/games/2863629425905948275/doors/1"}],
-			"status":"CLOSED","content":"UNKNOWN"},
-		{"links":[{"rel":"self","href":"http://localhost:8080/monty-hall/games/2863629425905948275/doors/2"}],
-			"status":"CLOSED","content":"UNKNOWN"},
-		{"links":[{"rel":"self","href":"http://localhost:8080/monty-hall/games/2863629425905948275/doors/3"}],
-			"status":"CLOSED","content":"UNKNOWN"}
+		{'links':[{'rel':'self','href':'http://localhost:8080/monty-hall/games/2863629425905948275/doors/1'}],
+			'status':'CLOSED','content':'UNKNOWN'},
+		{'links':[{'rel':'self','href':'http://localhost:8080/monty-hall/games/2863629425905948275/doors/2'}],
+			'status':'CLOSED','content':'UNKNOWN'},
+		{'links':[{'rel':'self','href':'http://localhost:8080/monty-hall/games/2863629425905948275/doors/3'}],
+			'status':'CLOSED','content':'UNKNOWN'}
 	];
 
 	return {
-		createGame: getGame,
-		getGame: getGame,
+		createGame: createGame,
+		getGame: function() {
+			return this.game;
+		},
 		selectDoor: function(doorToSelect) {
 			var self = this;
 
-			doorToSelect.status = "SELECTED";
+			doorToSelect.status = 'SELECTED';
 
 			try {
 				doorData.forEach(function(door) {
@@ -29,7 +31,7 @@ define(function(require) {
 					}
 				});
 			} catch(door) {
-				door.content = "SMALL_FURRY_ANIMAL";
+				door.content = 'SMALL_FURRY_ANIMAL';
 				door.status = 'OPENED';
 			}
 
@@ -37,21 +39,30 @@ define(function(require) {
 		},
 		openDoor: function(doorToOpen) {
 			doorToOpen.status = 'OPENED';
+
+			if(Math.random() <= 0.333) {
+				doorToOpen.content = 'SMALL_FURRY_ANIMAL';
+				this.game.status = 'LOST';
+			} else {
+				doorToOpen.content = 'JUERGEN';
+				this.game.status = 'WON';
+			}
+
 			return when.resolve(doorToOpen);
 		}
 	};
 
-	function getGame() {
+	function createGame() {
 		var doors, game;
 
 		doors = {
 			href: 'http://localhost:8080/monty-hall/games/2863629425905948275/doors',
 			get: function() {
 				return when.resolve({
-					"links": [
-						{"rel":"self","href":"http://localhost:8080/monty-hall/games/2863629425905948275/doors"}
+					'links': [
+						{'rel':'self','href':'http://localhost:8080/monty-hall/games/2863629425905948275/doors'}
 					],
-					"doors": doorData
+					'doors': doorData
 				});
 			},
 			update: function(door) {
