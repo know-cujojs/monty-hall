@@ -31,42 +31,17 @@ define({
 		create: 'app/game/controller',
 		properties: {
 			doors: { $ref: 'doors' },
-			_doCreateGame: { $ref: 'gameClient' }
+			gameApi: { $ref: 'gameApi' }
 		},
 		on: {
 			doorsView: {
-				'click:.door,.doorway': 'doors.findItem | selectDoor'/*,
-				'dblclick:.door,.doorway': 'doors.findItem | openDoor'*/
+				'click:.door,.doorway': 'doors.findItem | selectDoor'
 			}
 		},
 		ready: '_startGame'
 	},
 
-	// FIXME: Change back to https://monty-hall.cloudfoundry.com/games onces
-	// CORS is working
-	baseClient: { $ref: 'client!/games', entity: false, mime: 'application/json' },
-
-	entityParser: {
-		create: {
-			module: 'app/api/entityParser',
-			args: { $ref: 'baseClient' }
-		}
-	},
-
-	gameClient: {
-		create: {
-			module: 'app/api/entityParserInterceptor',
-			args: [
-				{
-					create: {
-						module: 'app/api/createThenGetInterceptor',
-						args: { $ref: 'baseClient' }
-					}
-				},
-				{ entityParser: { $ref: 'entityParser'} }
-			]
-		}
-	},
+	gameApi: { wire: 'app/game/rest' },
 
 	doorsView: {
 		render: {
@@ -177,7 +152,6 @@ define({
 		{ module: 'wire/dom/render' },
 		{ module: 'wire/on' },
 		{ module: 'wire/aop' },
-		{ module: 'rest/wire' },
 		{ module: 'cola' }
 	]
 });

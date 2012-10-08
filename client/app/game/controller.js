@@ -1,18 +1,9 @@
 (function (define) {
 define(function (require) {
 
-	var when, doorData;
+	var when;
 
 	when = require('when');
-
-	doorData = [
-		{"links":[{"rel":"self","href":"http://localhost:8080/monty-hall/games/2863629425905948275/doors/1"}],
-			"status":"CLOSED","content":"UNKNOWN"},
-		{"links":[{"rel":"self","href":"http://localhost:8080/monty-hall/games/2863629425905948275/doors/2"}],
-			"status":"CLOSED","content":"UNKNOWN"},
-		{"links":[{"rel":"self","href":"http://localhost:8080/monty-hall/games/2863629425905948275/doors/3"}],
-			"status":"CLOSED","content":"UNKNOWN"}
-	];
 
 	return {
 
@@ -38,9 +29,9 @@ define(function (require) {
 		},
 
 		_selectInitialDoor: function(door) {
-			return this._selectDoor(door).then(function(selectedDoor) {
+			return this.gameApi.selectDoor(door).then(function(selectedDoor) {
 				// this._getDoors().then(console.log.bind(console));
-				this._getDoors().then(this._updateDoorsData.bind(this));
+				this.game.doors.get().then(this._updateDoorsData.bind(this));
 				// TODO: this probably isn't the right place for this:
 				this.game.status = 'AWAITING_FINAL_SELECTION';
 				return door;
@@ -62,15 +53,10 @@ define(function (require) {
 				this.game.status = 'LOST';
 			}
 
-			return this._openDoor(door).then(function(openedDoor) {
-				this._getDoors().then(this._updateDoorsData.bind(this));
+			return this.gameApi.openDoor(door).then(function(openedDoor) {
+				this.game.doors.get().then(this._updateDoorsData.bind(this));
 				return door;
 			}.bind(this));
-		},
-
-		_openDoor: function (door) {
-			door.status = 'OPENED';
-			return when.resolve(door);
 		},
 
 		_startGame: function() {
@@ -79,79 +65,17 @@ define(function (require) {
 			self = this;
 			doors = this.doors;
 
-			return this._createGame()
+			return this.gameApi.createGame()
 			.then(function(game) {
 				self.game = game;
-				self._getDoors = game.doors.get;
-				self._getGame = game.self.get;
-				return self._getDoors();
+				return game.doors.get();
 			}).then(this._updateDoorsData.bind(this));
-		},
-
-		_createGame: function() {
-			// TODO: Figure out how to avoid passing the method
-			return this._doCreateGame({ method: 'POST' });
-		},
-
-		_doCreateGame: function() {
-			// return when.resolve({
-			// 	headers: {
-			// 		Location: 'blah'
-			// 	}
-			// });
-		},
-
-		_getGame: function(url) {
-			// return when.resolve({
-			// 	"links": [
-			// 		{"rel":"self","href":"http://localhost:8080/monty-hall/games/2863629425905948275"},
-			// 		{"rel":"doors","href":"http://localhost:8080/monty-hall/games/2863629425905948275/doors"},
-			// 		{"rel":"history","href":"http://localhost:8080/monty-hall/games/2863629425905948275/history"}
-			// 	],
-			// 	"status":"AWAITING_INITIAL_SELECTION"
-			// });
-		},
-
-		_getDoors: function() {
-			// return when.resolve({
-			// 	"links": [
-			// 		{"rel":"self","href":"http://localhost:8080/monty-hall/games/2863629425905948275/doors"}
-			// 	],
-			// 	"doors": doorData
-			// });
 		},
 
 		_updateDoorsData: function(doorData) {
 			doorData.doors.forEach(this.doors.update);
 			return doorData;
 		},
-
-		_selectDoor: function(selectedDoor) {
-			var self = this;
-
-			selectedDoor.status = "SELECTED";
-
-			return this.game.doors.update(selectedDoor)
-			.then(function(door) {
-				return self._getGame().then(function(game) {
-					self.game = game;
-					return door;
-				});
-			});
-	
-			// try {
-			// 	this.doors.forEach(function(door) {
-			// 		if(door !== selectedDoor) {
-			// 			throw door;
-			// 		}
-			// 	});
-			// } catch(door) {
-			// 	door.content = "SMALL_FURRY_ANIMAL";
-			// 	door.status = 'OPENED';
-			// }
-
-			// return when.resolve(selectedDoor);
-		}
 
 	};
 
