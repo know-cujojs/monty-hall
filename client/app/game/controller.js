@@ -30,11 +30,14 @@ define(function (require) {
 
 		_selectInitialDoor: function(door) {
 			return this.gameApi.selectDoor(door).then(function(selectedDoor) {
-				// this._getDoors().then(console.log.bind(console));
-				this.game.doors.get().then(this._updateDoorsData.bind(this));
 				// TODO: this probably isn't the right place for this:
 				this.game.status = 'AWAITING_FINAL_SELECTION';
-				return door;
+
+				return this.game.doors.get()
+					.then(this._updateDoorsData.bind(this))
+					.then(function() {
+						return door;
+					});
 			}.bind(this));
 		},
 
@@ -43,20 +46,23 @@ define(function (require) {
 				return;
 			}
 
-			// TODO: Fake, remove this
-			if (Math.random() >= 0.5) {
-				door.content = 'JUERGEN';
-				this.game.status = 'WON';
-			}
-			else {
-				door.content = 'SMALL_FURRY_ANIMAL';
-				this.game.status = 'LOST';
-			}
+			var self, game, updateDoorsData;
+
+			self = this;
+			game = this.game;
+			updateDoorsData = this._updateDoorsData.bind(this);
 
 			return this.gameApi.openDoor(door).then(function(openedDoor) {
-				this.game.doors.get().then(this._updateDoorsData.bind(this));
-				return door;
-			}.bind(this));
+				return game.doors.get()
+					.then(updateDoorsData)
+					.then(function() {
+						return game.self.get();
+					})
+					.then(function(game) {
+						self.game = game;
+						return openedDoor;
+					});
+			});
 		},
 
 		_startGame: function() {
@@ -66,16 +72,17 @@ define(function (require) {
 			doors = this.doors;
 
 			return this.gameApi.createGame()
-			.then(function(game) {
-				self.game = game;
-				return game.doors.get();
-			}).then(this._updateDoorsData.bind(this));
+				.then(function(game) {
+					self.game = game;
+					return game.doors.get();
+				})
+				.then(this._updateDoorsData.bind(this));
 		},
 
 		_updateDoorsData: function(doorData) {
 			doorData.doors.forEach(this.doors.update);
 			return doorData;
-		},
+		}
 
 	};
 
