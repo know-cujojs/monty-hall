@@ -6,7 +6,8 @@
   "keywords": [],
   "dependencies": {
     "rest": "",
-    "express": ""
+    "express": "",
+    "http-proxy": ""
   },
   "devDependencies": {
     "buster": "",
