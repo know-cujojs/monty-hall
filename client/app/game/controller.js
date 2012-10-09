@@ -36,7 +36,7 @@ define(function (require) {
 				return this.game.doors.get()
 					.then(this._updateDoorsData.bind(this))
 					.then(function() {
-						return door;
+						return selectedDoor;
 					});
 			}.bind(this));
 		},

@@ -14,7 +14,8 @@
     "grunt-buster": "",
     "grunt-css": "",
     "grunt-html": "",
-    "json5": ""
+    "json5": "",
+    "when": "1.5.x"
   },
   "volo": {
     "baseUrl": "client/lib",
