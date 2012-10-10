@@ -21,7 +21,7 @@ define({
 			args: [
 				{
 					create: {
-						module: 'app/api/createThenGetInterceptor',
+						module: 'rest/interceptor/location',
 						args: { $ref: 'baseClient' }
 					}
 				},
