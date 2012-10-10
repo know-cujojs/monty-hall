@@ -5,7 +5,7 @@ define(function(require) {
 
 	return {
 		createGame: function() {
-			return this.gameClient({ method: 'POST' })
+			return this.gameClient({ path: 'https://monty-hall.cloudfoundry.com/games', method: 'POST' })
 				.then(function(game) {
 					this.game = game;
 					return game;
