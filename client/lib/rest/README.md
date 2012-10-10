@@ -20,7 +20,7 @@ Rest can be installed via NPM, or from source.
 
 To install without source:
 
-    $ npm install rest-template
+    $ npm install rest
 
 From source:
 
@@ -158,6 +158,13 @@ Thanks
 
 Change Log
 ----------
+
+.next
+- npm name change 'rest-template' -> 'rest'
+- introduced 'location' interceptor which follows Location response headers, issuing a GET for the specified URL
+- response handlers now have access to the request client to issue subsequent requests
+- interceptors may specify their default client
+- renamed `rest/interceptor/_base` to `rest/interceptor`
 
 0.7.5
 - Initial release, everything is new

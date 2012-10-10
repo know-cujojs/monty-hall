@@ -1,7 +1,7 @@
 (function(define) {
 define(function(require) {
 
-	var interceptor = require('rest/interceptor/_base');
+	var interceptor = require('rest/interceptor');
 
 	return interceptor({
 		response: function(response, config) {
