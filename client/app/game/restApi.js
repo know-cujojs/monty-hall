@@ -5,7 +5,7 @@ define(function(require) {
 
 	return {
 		createGame: function() {
-			return this.gameClient({ path: 'https://monty-hall.cloudfoundry.com/games', method: 'POST' })
+			return this.gameClient({ path: this.host, method: 'POST' })
 				.then(function(game) {
 					this.game = game;
 					return game;
@@ -14,7 +14,7 @@ define(function(require) {
 		},
 		
 		getGame: function() {
-			return this.game ? this.game.self.get() : when.reject();
+			return this.game ? this.game.self : when.reject();
 		},
 		
 		selectDoor: function(doorToSelect) {
@@ -33,7 +33,7 @@ define(function(require) {
 
 		return game.doors.update(doorToUpdate)
 			.then(function(door) {
-				return game.self.get().then(function(game) {
+				return game.self.then(function(game) {
 					self.game = game;
 					return door;
 				});

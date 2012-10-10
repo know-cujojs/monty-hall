@@ -33,7 +33,7 @@ define(function (require) {
 				// TODO: this probably isn't the right place for this:
 				this.game.status = 'AWAITING_FINAL_SELECTION';
 
-				return this.game.doors.get()
+				return this.game.doors
 					.then(this._updateDoorsData.bind(this))
 					.then(function() {
 						return selectedDoor;
@@ -53,10 +53,10 @@ define(function (require) {
 			updateDoorsData = this._updateDoorsData.bind(this);
 
 			return this.gameApi.openDoor(door).then(function(openedDoor) {
-				return game.doors.get()
+				return game.doors
 					.then(updateDoorsData)
 					.then(function() {
-						return game.self.get();
+						return game.self;
 					})
 					.then(function(game) {
 						self.game = game;
@@ -74,7 +74,7 @@ define(function (require) {
 			return this.gameApi.createGame()
 				.then(function(game) {
 					self.game = game;
-					return game.doors.get();
+					return game.doors;
 				})
 				.then(this._updateDoorsData.bind(this));
 		},

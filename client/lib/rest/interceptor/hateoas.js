@@ -36,22 +36,23 @@
 		 */
 		hateoas = interceptor({
 			response: function (response, config) {
-				if (!response.entity || !response.entity.links) {
-					return response;
-				}
+				var entity, target, targetName, links, client;
 
-				var target, targetName, links, client;
-
-				links = response.entity.links;
+				entity = response.entity || response;
+				links = entity.links;
 				client = config.client || defaultClient;
 				targetName = 'target' in config ? config.target || '' : '_links';
 
+				if (!Array.isArray(links)) {
+					return response;
+				}
+
 				if (targetName === '') {
-					target = response.entity;
+					target = entity;
 				}
 				else {
 					target = {};
-					Object.defineProperty(response.entity, targetName, {
+					Object.defineProperty(entity, targetName, {
 						enumerable: false,
 						value: target
 					});
