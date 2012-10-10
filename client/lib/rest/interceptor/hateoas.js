@@ -3,7 +3,9 @@
 	define(['../interceptor', './pathPrefix', '../../rest'], function (interceptor, pathPrefix, defaultClient) {
 		"use strict";
 
-		var hateoas;
+		var hateoas, cycleFlag;
+
+		cycleFlag = '__rest_hateoas_seen__';
 
 		/**
 		 * [Experimental]
@@ -36,51 +38,69 @@
 		 */
 		hateoas = interceptor({
 			response: function (response, config) {
-				var entity, target, targetName, links, client;
+				var targetName, client;
 
-				entity = response.entity || response;
-				links = entity.links;
 				client = config.client || defaultClient;
 				targetName = 'target' in config ? config.target || '' : '_links';
 
-				if (!Array.isArray(links)) {
-					return response;
-				}
-
-				if (targetName === '') {
-					target = entity;
-				}
-				else {
-					target = {};
-					Object.defineProperty(entity, targetName, {
-						enumerable: false,
-						value: target
+				function apply(target, links) {
+					links.forEach(function (link) {
+						Object.defineProperty(target, link.rel + 'Link', {
+							enumerable: false,
+							value: link
+						});
+						Object.defineProperty(target, link.rel, {
+							enumerable: false,
+							get: function () {
+								return hateoas(client, config)({ path: link.href });
+							}
+						});
 					});
-				}
 
-				links.forEach(function (link) {
-					Object.defineProperty(target, link.rel + 'Link', {
+					// if only Proxy was well supported...
+					Object.defineProperty(target, 'clientFor', {
 						enumerable: false,
-						value: link
-					});
-					Object.defineProperty(target, link.rel, {
-						enumerable: false,
-						get: function () {
-							return hateoas(client, config)({ path: link.href });
+						value: function clientFor(rel, parentClient) {
+							return pathPrefix(
+								parentClient || client,
+								{ prefix: target[rel + 'Link'].href }
+							);
 						}
 					});
-				});
+				}
 
-				// if only Proxy was well supported...
-				Object.defineProperty(target, 'clientFor', {
-					enumerable: false,
-					value: function clientFor(rel, parentClient) {
-						return pathPrefix(
-							parentClient || client,
-							{ prefix: target[rel + 'Link'].href }
-						);
+				function walk(obj) {
+					if (typeof obj !== 'object' || obj === null || cycleFlag in obj) { return; }
+
+					var target, links;
+
+					Object.defineProperty(obj, cycleFlag, { enumerable: false, configurable: true, value: true });
+
+					links = obj.links;
+					if (Array.isArray(links)) {
+						if (targetName === '') {
+							target = obj;
+						}
+						else {
+							target = {};
+							Object.defineProperty(obj, targetName, {
+								enumerable: false,
+								value: target
+							});
+						}
+
+						apply(target, links);
 					}
-				});
+
+					Object.keys(obj).forEach(function (prop) {
+						walk(obj[prop]);
+					});
+
+					// some nodes will be visited twice, but cycles will not be infinite
+					delete obj[cycleFlag];
+				}
+
+				walk(response);
 
 				return response;
 			}
