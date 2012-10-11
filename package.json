@@ -6,8 +6,7 @@
   "keywords": [],
   "dependencies": {
     "rest": "",
-    "express": "",
-    "http-proxy": ""
+    "express": ""
   },
   "devDependencies": {
     "buster": "",
@@ -24,7 +23,7 @@
       "when": "github:cujojs/when/1.5.0",
       "meld": "github:cujojs/meld/1.0.0",
       "poly": "github:cujojs/poly/0.5.1",
-      "rest": "github:scothis/rest/v0.7.5"
+      "rest": "github:scothis/rest/hateoas"
     }
   }
 }

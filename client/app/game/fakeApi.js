@@ -53,40 +53,34 @@ define(function(require) {
 	};
 
 	function createGame() {
-		var doors, game;
-
-		doors = {
-			href: 'http://localhost:8080/monty-hall/games/2863629425905948275/doors',
-			get: function() {
-				return when.resolve({
-					'links': [
-						{'rel':'self','href':'http://localhost:8080/monty-hall/games/2863629425905948275/doors'}
-					],
-					'doors': doorData
-				});
-			},
-			update: function(door) {
-				return when.resolve(door);
-			}
-		};
+		var game;
 
 		this.game = game = {
 			status: 'AWAITING_INITIAL_SELECTION',
-			self: {
+			selfLink: {
 				href: 'http://localhost:8080/monty-hall/games/2863629425905948275',
-				get: function() {
-					return when.resolve(game);
-				}
+				rel: 'self'
 			},
-			doors: doors,
-			history: {
+			doors: when.resolve({
+				self: when.resolve(this),
+				selfLink: {
+					href: 'http://localhost:8080/monty-hall/games/2863629425905948275/doors',
+					rel: 'self'
+				},
+				'doors': doorData
+			}),
+			doorsLink: {
+				href: 'http://localhost:8080/monty-hall/games/2863629425905948275/doors',
+				rel: 'doors'
+			},
+			history: when.resolve({}),
+			historyLink: {
 				href: 'http://localhost:8080/monty-hall/games/2863629425905948275/history',
-				get: function() {
-					// TODO: Fill in fake history if we need it
-					return when.resolve({});
-				}
+				rel: 'history'
 			}
 		};
+
+		game.self = when.resolve(game);
 
 		return when.resolve(game);
 	}

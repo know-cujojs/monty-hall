@@ -26,13 +26,26 @@
 			return request;
 		}
 
-		function defaultResponseHandler(response, config) {
+		function defaultResponseHandler(response, config, client) {
 			return response;
 		}
 
+		/**
+		 * Create a new interceptor for the provided handlers.
+		 *
+		 * @param {Function} [handlers.request] request handler
+		 * @param {Function} [handlers.response] response handler regardless of error state
+		 * @param {Function} [handlers.success] response handler when the request is not in error
+		 * @param {Function} [handlers.error] response handler when the request is in error
+		 * @param {Function} [handlers.client] the client to use if otherwise not specified, defaults to platform default client
+		 *
+		 * @returns {Interceptor}
+		 */
 		return function (handlers) {
 
 			var requestHandler, successResponseHandler, errorResponseHandler;
+
+			handlers = handlers || {};
 
 			requestHandler         = handlers.request || defaultRequestHandler;
 			successResponseHandler = handlers.success || handlers.response || defaultResponseHandler;
@@ -45,20 +58,21 @@
 					config = client;
 				}
 				if (typeof client !== 'function') {
-					client = defaultClient;
+					client = handlers.client || defaultClient;
 				}
 				config = config || {};
 
 				interceptor = function (request) {
+					request = request || {};
 					return when(requestHandler(request, config)).then(function (request) {
 						return when(client(request)).then(
 							function (response) {
-								return successResponseHandler(response, config);
+								return successResponseHandler(response, config, client);
 							},
 							function (response) {
 								// Propagate the rejection, but with the result of the
 								// registered error response handler
-								return when.reject(errorResponseHandler(response, config));
+								return when.reject(errorResponseHandler(response, config, client));
 							}
 						);
 					});

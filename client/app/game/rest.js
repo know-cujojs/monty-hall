@@ -2,32 +2,32 @@ define({
 	$exports: {
 		create: 'app/game/restApi',
 		properties: {
-			gameClient: { $ref: 'gameClient' }
+			gameClient: { $ref: 'gameClient' },
+			host: 'https://monty-hall.cloudfoundry.com/games'
 		}
 	},
 
-	// FIXME: Change back to https://monty-hall.cloudfoundry.com/games onces
-	// CORS is working
-	baseClient: { $ref: 'client!/games', entity: false, mime: 'application/json' },
-
-	entityParser: {
+	baseClient: {
 		create: {
-			module: 'app/api/entityParser',
-			args: { $ref: 'baseClient' }
+			module: 'rest/interceptor/entity',
+			args: {
+				create: {
+					module: 'rest/interceptor/location',
+					args: { $ref: 'client!', mime: 'application/json', entity: false }
+				}
+			}
 		}
 	},
 
 	gameClient: {
 		create: {
-			module: 'app/api/entityParserInterceptor',
+			module: 'rest/interceptor/hateoas',
 			args: [
+				{ $ref: 'baseClient' },
 				{
-					create: {
-						module: 'app/api/createThenGetInterceptor',
-						args: { $ref: 'baseClient' }
-					}
-				},
-				{ entityParser: { $ref: 'entityParser' } }
+					target: '',
+					client: { $ref: 'baseClient' }
+				}
 			]
 		}
 	},
