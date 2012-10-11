@@ -73,6 +73,7 @@ define(function (require) {
 
 			return this.gameApi.createGame()
 				.then(function(game) {
+					self.clickStream.start(game.clientFor('clicks'));
 					self.game = game;
 					return game.doors;
 				})

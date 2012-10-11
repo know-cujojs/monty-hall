@@ -77,6 +77,13 @@ define(function(require) {
 			historyLink: {
 				href: 'http://localhost:8080/monty-hall/games/2863629425905948275/history',
 				rel: 'history'
+			},
+			clientFor: function (rel) {
+				return function (request) {
+					return when.resolve({
+						request: request
+					});
+				}
 			}
 		};
 
