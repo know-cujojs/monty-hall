@@ -31,15 +31,24 @@ define({
 		create: 'app/game/controller',
 		properties: {
 			doors: { $ref: 'doors' },
-			gameApi: { $ref: 'gameApi' },
-			clickStream: { $ref: 'clickStream' }
+			gameApi: { $ref: 'gameApi' }
 		},
 		on: {
 			doorsView: {
-				'click:.door,.doorway': 'doors.findItem | selectDoor'
+				'click:.doorway': 'doors.findItem | selectDoor'
 			}
 		},
+		afterResolving: {
+			'_startGame': 'invoker | clickStream.start'
+		},
 		ready: '_startGame'
+	},
+
+	invoker: {
+		create: {
+			module: 'app/invoker',
+			args: ['clientFor', ['clicks']]
+		}
 	},
 
 	gameApi: { wire: 'app/game/rest' },
@@ -65,15 +74,6 @@ define({
 
 	doors: { create: 'cola/Hub' },
 
-	doorsData: {
-		literal: [],
-		bind: {
-			to: { $ref: 'doors' },
-			identifier: { $ref: 'selfLinkId' },
-			comparator: { $ref: 'byId' }
-		}
-	},
-
 	history: { create: 'cola/Hub' },
 
 	historyData: {
@@ -91,9 +91,7 @@ define({
 		}
 	},
 
-	clickStream: {
-		create: 'app/game/clickStream'
-	},
+	clickStream: { create: 'app/game/clickStream' },
 
 	selfLinkId: { module: 'app/selfLinkIdentifier' },
 
@@ -126,7 +124,6 @@ define({
 			setGameState: { compose: 'controller.getStatus | gameStateMapper' }
 		},
 		afterResolving: {
-			'controller._startGame': 'setGameState',
 			'controller._selectInitialDoor': 'setGameState',
 			'controller._switchOrStay': 'setGameState'
 		},

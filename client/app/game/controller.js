@@ -7,7 +7,24 @@ define(function (require) {
 
 	return {
 
+		/**
+		 * Client-side observable data container for doors data
+		 * @required
+		 */
+		doors: null,
+
+		/**
+		 * The game API that manages the game and door state
+		 * @required
+		 */
+		gameApi: null,
+
 		selectDoor: function (door) {
+			// Can't select already-opened doors
+			if(door.status == 'OPENED') {
+				return door;
+			}
+
 			var result = this._doSelectDoor(door);
 
 			if(this._doSelectDoor !== this._switchOrStay) {
@@ -73,11 +90,13 @@ define(function (require) {
 
 			return this.gameApi.createGame()
 				.then(function(game) {
-					self.clickStream.start(game.clientFor('clicks'));
 					self.game = game;
 					return game.doors;
 				})
-				.then(this._updateDoorsData.bind(this));
+				.then(this._updateDoorsData.bind(this))
+				.then(function() {
+					return self.game;
+				});
 		},
 
 		_updateDoorsData: function(doorData) {
