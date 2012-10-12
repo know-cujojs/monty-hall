@@ -27,5 +27,9 @@
       "clicks": "github:five-eleven/clicks/master",
       "integration": "github:five-eleven/integration/master"
     }
+  },
+  "scripts": {
+  	"start": "node server/main.js",
+  	"test": "buster test"
   }
 }
