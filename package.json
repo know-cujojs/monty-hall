@@ -23,7 +23,9 @@
       "when": "github:cujojs/when/1.5.1",
       "meld": "github:cujojs/meld/1.0.0",
       "poly": "github:cujojs/poly/0.5.1",
-      "rest": "github:scothis/rest/hateoas"
+      "rest": "github:scothis/rest/hateoas",
+      "clicks": "github:five-eleven/clicks/master",
+      "integration": "github:five-eleven/integration/master"
     }
   }
 }

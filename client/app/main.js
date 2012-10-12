@@ -31,7 +31,8 @@ define({
 		create: 'app/game/controller',
 		properties: {
 			doors: { $ref: 'doors' },
-			gameApi: { $ref: 'gameApi' }
+			gameApi: { $ref: 'gameApi' },
+			clickStream: { $ref: 'clickStream' }
 		},
 		on: {
 			doorsView: {
@@ -88,6 +89,10 @@ define({
 		bind: {
 			to: { $ref: 'history' }
 		}
+	},
+
+	clickStream: {
+		create: 'app/game/clickStream'
 	},
 
 	selfLinkId: { module: 'app/selfLinkIdentifier' },
