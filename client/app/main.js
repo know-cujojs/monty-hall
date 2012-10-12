@@ -74,23 +74,6 @@ define({
 
 	doors: { create: 'cola/Hub' },
 
-	history: { create: 'cola/Hub' },
-
-	historyData: {
-		literal: {
-			links: [ { rel: 'self', href: 'http://localhost:8080/monty-hall/games/2863629425905948275/history' } ],
-			events: [
-				'SELECTED_DOOR_ONE',
-				'REVEALED_DOOR_THREE',
-				'SELECTED_DOOR_TWO',
-				'WON'
-			]
-		},
-		bind: {
-			to: { $ref: 'history' }
-		}
-	},
-
 	clickStream: { create: 'app/game/clickStream' },
 
 	selfLinkId: { module: 'app/selfLinkIdentifier' },
