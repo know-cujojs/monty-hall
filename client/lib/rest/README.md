@@ -159,6 +159,9 @@ Thanks
 Change Log
 ----------
 
+0.8.1
+- fixed bug where http method may be overwritten
+
 0.8.0
 - npm name change 'rest-template' -> 'rest'
 - introduced experimental HATEOAS support
