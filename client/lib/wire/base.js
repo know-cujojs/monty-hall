@@ -12,10 +12,10 @@
  */
 
 (function(define) {
-define(['when', './lib/object', './lib/functional', './lib/component'], function(when, object, functional, createComponent) {
+define(['when', './lib/object', './lib/functional', './lib/component', './lib/invoker'], function(when, object, functional, createComponent, createInvoker) {
 
 	var whenAll, chain, obj, undef;
-	
+
 	whenAll = when.all;
 	chain = when.chain;
 
@@ -149,6 +149,18 @@ define(['when', './lib/object', './lib/functional', './lib/component'], function
 
 	}
 
+	function invokerFactory(resolver, componentDef, wire) {
+
+		wire(componentDef.invoker).then(function(invokerContext) {
+			// It'd be nice to use wire.getProxy() then proxy.invoke()
+			// here, but that means the invoker must always return
+			// a promise.  Not sure that's best, so for now, just
+			// call the method directly
+			return createInvoker(invokerContext.method, invokerContext.args);
+		}).then(resolver.resolve, resolver.reject);
+
+	}
+
 	function invokerFacet(resolver, facet, wire) {
 		chain(invokeAll(facet, wire), resolver);
 	}
@@ -179,7 +191,7 @@ define(['when', './lib/object', './lib/functional', './lib/component'], function
 				else if (typeof object == 'function') {
 					return object.bind();
 				}
-				
+
 				if (!options) {
 					options = {};
 				}
@@ -253,7 +265,7 @@ define(['when', './lib/object', './lib/functional', './lib/component'], function
 				if (!proxy.clone) {
 					throw new Error('No clone function found for ' + spec.id);
 				}
-				
+
 				return proxy.clone(options);
 			});
 		}).then(resolver.resolve, resolver.reject);
@@ -351,7 +363,8 @@ define(['when', './lib/object', './lib/functional', './lib/component'], function
 					literal: literalFactory,
 					prototype: protoFactory,
 					clone: cloneFactory,
-					compose: composeFactory
+					compose: composeFactory,
+					invoker: invokerFactory
 				},
 				facets: {
 					// properties facet.  Sets properties on components

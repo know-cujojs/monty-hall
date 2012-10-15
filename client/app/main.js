@@ -39,15 +39,14 @@ define({
 			}
 		},
 		afterResolving: {
-			'_startGame': 'invoker | clickStream.start'
+			'_startGame': 'clientForClicksInvoker | clickStream.start'
 		},
 		ready: '_startGame'
 	},
 
-	invoker: {
-		create: {
-			module: 'app/invoker',
-			args: ['clientFor', ['clicks']]
+	clientForClicksInvoker: {
+		invoker: {
+			method: 'clientFor', args: ['clicks']
 		}
 	},
 
