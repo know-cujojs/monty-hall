@@ -5,7 +5,7 @@ define(function (require) {
 
 	when = require('when');
 
-	return {
+	module.exports = {
 
 		/**
 		 * Client-side observable data container for doors data
