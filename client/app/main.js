@@ -18,6 +18,15 @@ define({
 		insert: { last: 'root' }
 	},
 
+	marqueeView: {
+		render: {
+			template: { module: 'text!app/marquee/template.html' },
+			replace: { module: 'i18n!app/marquee/strings' },
+			// css: { module: 'css!app/marquee/structure.css' },
+			at: { $ref: 'dom.first!.marquee', at: 'gameView' }
+		}
+	},
+
 	instructionsView: {
 		render: {
 			template: { module: 'text!app/instructions/template.html' },
