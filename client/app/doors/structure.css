@@ -22,7 +22,7 @@
 	display: block;
 	-webkit-transition: -webkit-transform 1s ease;
 	-webkit-transform-origin: 0 75%;
-	box-shadow: 0 0 10px gray;
+	z-index: 1;
 }
 
 .doors-view .doorway .content {
@@ -34,7 +34,7 @@
 	margin: 0;
 	padding: 0;
 	display: block;
-	z-index: -1;
+	z-index: 0;
 }
 
 .doors-view .doorway.closed .door {

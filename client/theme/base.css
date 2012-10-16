@@ -1,5 +1,18 @@
+body, html {
+	border: none;
+	margin: 0;
+	padding: 0;
+	width: 1280px;
+	height: 720px;
+    background: #000;
+    background-image: -webkit-gradient(radial, 50% 50%, 0, 50% 50%, 1000, from(#602), to(#000));
+    background-image: -moz-radial-gradient(center 45deg, circle closest-side, #602 0, #000 1000px);
+}
+
 body {
 	font-family: "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+	color: #eee;
+	text-shadow: 0 0 4px #000;
 }
 
 h1 {
@@ -9,6 +22,9 @@ h1 {
 }
 
 .container {
+	margin: 0;
+	padding: 0;
+	border: none;
 	text-align: center;
 }
 
@@ -28,6 +44,7 @@ h1 {
 
 .doors-view .doorway .door {
 	background: yellow;
+	box-shadow: 0 0 10px black;
 }
 
 .doors-view .doorway .door:before {
@@ -45,12 +62,20 @@ h1 {
 	content: '2';
 }
 
+.doors-view .doorway:first-child {
+	-webkit-transform: perspective(1000px) rotateY(10deg) translateY(8px);
+}
+
 .doors-view .doorway:first-child .door {
 	background: red;
 }
 
 .doors-view .doorway:first-child .door:before {
 	content: '1';
+}
+
+.doors-view .doorway:last-child {
+	-webkit-transform: perspective(1000px) rotateY(-10deg) translateY(8px);
 }
 
 .doors-view .doorway:last-child .door {
@@ -62,7 +87,7 @@ h1 {
 }
 
 .doors-view .doorway .content {
-	background-color: #666;
+	background-color: #333;
 	background-position: 50% 50%;
 	background-repeat: no-repeat;
 	box-shadow: inset 0 0 40px black;
@@ -93,4 +118,9 @@ h1 {
 
 .instructions-view {
 	font-size: 24pt;
+}
+
+.instructions-view dt {
+	font-weight: bold;
+	font-style: italic;
 }
