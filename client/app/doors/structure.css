@@ -22,6 +22,8 @@
 	display: block;
 	-webkit-transition: -webkit-transform 1s ease;
 	-webkit-transform-origin: 0 75%;
+	-moz-transition: -moz-transform 1s ease;
+	-moz-transform-origin: 0 75%;
 	z-index: 1;
 }
 
@@ -35,16 +37,4 @@
 	padding: 0;
 	display: block;
 	z-index: 0;
-}
-
-.doors-view .doorway.closed .door {
-	-webkit-transform: perspective(0px) rotateY(0);
-}
-
-.doors-view .doorway.opened .door {
-	-webkit-transform: perspective(1000px) rotateY(-85deg);
-}
-
-.doors-view .doorway.selected .door {
-	box-shadow: 0 0 30px blue;
 }

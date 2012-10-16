@@ -64,6 +64,8 @@ h1 {
 
 .doors-view .doorway:first-child {
 	-webkit-transform: perspective(1000px) rotateY(10deg) translateY(8px);
+	-moz-transform: perspective(1000px) rotateY(10deg) translateY(8px);
+	transform: perspective(1000px) rotateY(10deg) translateY(8px);
 }
 
 .doors-view .doorway:first-child .door {
@@ -76,6 +78,8 @@ h1 {
 
 .doors-view .doorway:last-child {
 	-webkit-transform: perspective(1000px) rotateY(-10deg) translateY(8px);
+	-moz-transform: perspective(1000px) rotateY(-10deg) translateY(8px);
+	transform: perspective(1000px) rotateY(-10deg) translateY(8px);
 }
 
 .doors-view .doorway:last-child .door {
@@ -116,6 +120,22 @@ h1 {
 	content: '?';
 }
 
+.doors-view .closed .door {
+	-webkit-transform: perspective(0px) rotateY(0);
+	-moz-transform: perspective(0px) rotateY(0);
+	transform: perspective(0px) rotateY(0);
+}
+
+.doors-view .opened .door {
+	-webkit-transform: perspective(1000px) rotateY(-85deg);
+	-moz-transform: perspective(1000px) rotateY(-85deg);
+	transform: perspective(1000px) rotateY(-85deg);
+}
+
+.doors-view .selected .door {
+	box-shadow: 0 0 40px lightblue;
+}
+
 .instructions-view {
 	font-size: 24pt;
 }
@@ -123,4 +143,9 @@ h1 {
 .instructions-view dt {
 	font-weight: bold;
 	font-style: italic;
+}
+
+.instructions-view dd {
+	opacity: 0.75;
+
 }

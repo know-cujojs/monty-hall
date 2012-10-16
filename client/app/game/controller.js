@@ -1,5 +1,5 @@
 (function (define) {
-define(function (require) {
+define(['require', 'module'], function (require, module) {
 
 	var when;
 

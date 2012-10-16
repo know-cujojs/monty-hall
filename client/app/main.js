@@ -59,7 +59,7 @@ define({
 		}
 	},
 
-	gameApi: { wire: 'app/game/rest' },
+	gameApi: { wire: 'app/game/fake' },
 
 	doorsView: {
 		render: {
