@@ -25,7 +25,7 @@
 			// scothis/rest - a wonderfully RESTful HTTP client
 			{ name: 'rest', location: 'lib/rest', main: 'rest' },
 
-			// cujojs/meld - AOP for JS (promise-aware, too!)
+			// cujojs/meld - AOP for Javascript
 			{ name: 'meld', location: 'lib/meld', main: 'meld' },
 
 			// cujojs/poly - a set of tiny ES5-ish polyfills
@@ -34,7 +34,7 @@
 			// cujojs/cola - an IOC-ish data-binding lib (alpha)
 			{ name: 'cola', location: 'lib/cola', main: './cola' },
 
-			// (private) - Spring Integration for javascript?
+			// (private) - Spring Integration for Javascript?
 			{ name: 'integration', location: 'lib/integration', main: 'integration' },
 
 			// (private) - client-side event capturing
