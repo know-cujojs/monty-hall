@@ -23,12 +23,26 @@
 <script>
 var curl;
 (function (global) {
-	var curlUrl, callbackKey, init;
+	var curlUrl, curlCfg, callbackKey, init;
 
 	// load curl, then configure test env, then run tests
 
 	curlUrl = '../../lib/curl/src/curl.js';
 	callbackKey = 'harnessCallback';
+	curlCfg = {
+		baseUrl: '../../',
+		packages: [
+			{ name: 'curl', location: 'lib/curl/src/curl', main: '../curl' },
+			{ name: 'wire', location: 'lib/wire', main: './wire' },
+			{ name: 'when', location: 'lib/when', main: './when' },
+			{ name: 'rest', location: 'lib/rest', main: './rest' },
+			{ name: 'meld', location: 'lib/meld', main: './meld' },
+			{ name: 'poly', location: 'lib/poly', main: './poly' },
+			{ name: 'cola', location: 'lib/cola', main: './cola' },
+			{ name: 'integration', location: 'lib/integration', main: 'integration' },
+			{ name: 'clicks', location: 'lib/clicks', main: 'clicks' }
+		]
+	};
 
 	function loadCurl (cb) {
 		var script;
@@ -46,20 +60,7 @@ var curl;
 	}
 
 	function configureCurl () {
-		curl({
-			baseUrl: '../../',
-			packages: [
-				{ name: 'curl', location: 'lib/curl/src/curl', main: '../curl' },
-				{ name: 'wire', location: 'lib/wire', main: './wire' },
-				{ name: 'when', location: 'lib/when', main: './when' },
-				{ name: 'rest', location: 'lib/rest', main: './rest' },
-				{ name: 'meld', location: 'lib/meld', main: './meld' },
-				{ name: 'poly', location: 'lib/poly', main: './poly' },
-				{ name: 'cola', location: 'lib/cola', main: './cola' },
-				{ name: 'integration', location: 'lib/integration', main: 'integration' },
-				{ name: 'clicks', location: 'lib/clicks', main: 'clicks' }
-			]
-		});
+		curl(curlCfg);
 	}
 
 	// load harness in test frame
