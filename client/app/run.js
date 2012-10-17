@@ -19,8 +19,6 @@
 		preloads: ['poly/all']
 	};
 
-	// FIXME: wire! does not work here with curl 0.7, have to use
-	// wire/wire
 	curl(config, ['wire!app/main']);
 
 })(curl);
