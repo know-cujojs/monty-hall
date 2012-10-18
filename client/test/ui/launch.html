@@ -21,16 +21,13 @@
 <body>
 </body>
 <script>
-var curl;
 (function (global) {
-	var curlUrl, curlCfg, callbackKey, init;
+	var curlUrl, commonCfg, callbackKey;
 
-	// load curl, then configure test env, then run tests
-
-	curlUrl = '../../lib/curl/src/curl.js';
+	curlUrl = '../../../lib/curl/src/curl.js';
 	callbackKey = 'harnessCallback';
-	curlCfg = {
-		baseUrl: '../../',
+	commonCfg = {
+		baseUrl: '../../../',
 		packages: [
 			{ name: 'curl', location: 'lib/curl/src/curl', main: '../curl' },
 			{ name: 'wire', location: 'lib/wire', main: './wire' },
@@ -44,43 +41,41 @@ var curl;
 		]
 	};
 
-	function loadCurl (cb) {
-		var script;
+	loadHarness(getHarnessUrl(), document.body);
 
-		script = document.createElement('script');
-		script.onload = function () {
-			configureCurl();
-			cb();
-		};
+	function loadCurl (harness, cb) {
+		var doc, script;
+
+		doc = harness.document;
+		script = doc.createElement('script');
+		script.onload = cb;
 		script.onerror = function () {
 			console.log('could not load curl!');
 		};
 		script.src = curlUrl;
-		(document.head || document.getElementsByTagName('head')[0]).appendChild(script);
-	}
-
-	function configureCurl () {
-		curl(curlCfg);
+		(doc.head || doc.getElementsByTagName('head')[0]).appendChild(script);
 	}
 
 	// load harness in test frame
 	function loadHarness (url, node) {
-		var iframe;
+		var iframe, harness, curl;
+
+		// create temporary global callback
+		global[callbackKey] = function (cb) {
+			harness = iframe.contentWindow;
+			loadCurl(harness, function () {
+				delete global[callbackKey];
+				curl = harness.curl;
+				curl(commonCfg);
+				cb();
+			});
+		};
+
 		iframe = node.ownerDocument.createElement('iframe');
+
 		node.appendChild(iframe);
+
 		iframe.src = url;
-	}
-
-	global[callbackKey] = function (cb) {
-		init = cb;
-		checkToStart();
-	};
-
-	function checkToStart () {
-		if (curl && init) {
-			delete global[callbackKey];
-			init(curl);
-		}
 	}
 
 	function getHarnessUrl () {
@@ -88,9 +83,6 @@ var curl;
 		hUrl = document.location.hash.substr(1);
 		return hUrl + '#' + callbackKey;
 	}
-
-	loadCurl(checkToStart);
-	loadHarness(getHarnessUrl(), document.body);
 
 }(window));
 
