@@ -62,7 +62,9 @@
 
 		// create temporary global callback
 		global[callbackKey] = function (cb) {
+
 			harness = iframe.contentWindow;
+			document.title = 'harness: '  + harness.document.title;
 			loadCurl(harness, function () {
 				delete global[callbackKey];
 				curl = harness.curl;
