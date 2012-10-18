@@ -115,8 +115,7 @@ define({
 			setGameState: { compose: 'controller.getStatus | gameStateMapper' }
 		},
 		afterResolving: {
-			'controller._selectInitialDoor': 'setGameState',
-			'controller._switchOrStay': 'setGameState'
+			'controller.selectDoor': 'setGameState'
 		},
 		// we need to run setGameState at "ready" since the
 		// controller's "ready" may be called before our
@@ -142,7 +141,7 @@ define({
 	plugins: [
 		// { module: 'wire/debug' },
 		{ module: 'wire/sizzle', classes: { init: 'loading' }},
-		{ module: 'wire/dom', classes: { init: 'loading' }},
+		// { module: 'wire/dom', classes: { init: 'loading' }},
 		{ module: 'wire/dom/render' },
 		{ module: 'wire/on' },
 		{ module: 'wire/aop' },
