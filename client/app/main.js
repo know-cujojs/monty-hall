@@ -39,7 +39,7 @@ define({
 	controller: {
 		create: 'app/game/controller',
 		properties: {
-			doors: { $ref: 'doors' },
+			_updateDoor: { compose: 'doors.update' },
 			gameApi: { $ref: 'gameApi' }
 		},
 		on: {
@@ -140,7 +140,8 @@ define({
 	},
 
 	plugins: [
-//		{ module: 'wire/debug' },
+		// { module: 'wire/debug' },
+		{ module: 'wire/sizzle', classes: { init: 'loading' }},
 		{ module: 'wire/dom', classes: { init: 'loading' }},
 		{ module: 'wire/dom/render' },
 		{ module: 'wire/on' },

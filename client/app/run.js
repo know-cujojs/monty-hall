@@ -10,7 +10,9 @@
 		pluginPath: 'curl/plugin',
 
 		// any special url remappings would go here
-		paths: {},
+		paths: {
+			'sizzle': 'lib/sizzle'
+		},
 
 		packages: [
 			// cujojs/curl - a small, fast AMD & CJS module loader
