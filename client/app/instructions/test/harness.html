@@ -101,28 +101,27 @@
 	 * This is the function that is run when the javascript environment is
 	 * ready.  Note that wire.js handles domReady internally so there's no
 	 * reason to specify it directly.  You should load and wire a spec here
-	 * to initialize the harness.  We embedded the spec directly in the page
-	 * for easier viewing.  You can put unit tests and/or functional tests
-	 * in here.
+	 * to initialize the harness.  You can put unit tests and/or functional
+	 * tests in here.
 	 */
 	function runTests (wire) {
 
 		wire({
 
 			/* Get a reference to the root of our DOM environment. */
-			gameView: document.body,
+			instructionsNode: { $ref: 'dom.first!.instructions', at: document.body },
 
 			/*
-				Render the view component using wire/dom/render onto
+				Render the view component (via its spec) onto
 				the dom node that matches the css query ".instructions"
 				under the 'gameView' node (our root).
 			 */
 			instructionsView: {
-				render: {
-					template: { module: 'text!app/instructions/template.html' },
-					replace: { module: 'i18n!app/instructions/strings' },
-					css: { module: 'css!app/instructions/structure.css' },
-					at: { $ref: 'dom.first!.instructions', at: 'gameView' }
+				wire: {
+					spec: 'app/instructions/spec',
+					provide: {
+						$root: { $ref: 'instructionsNode' }
+					}
 				}
 			},
 

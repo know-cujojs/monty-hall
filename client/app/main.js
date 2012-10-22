@@ -33,13 +33,14 @@ define({
 
 	// The game instructions view that walks the user through playing
 	// the game.  Note how this uses OOCSS/SMACSS to display the
-	// different steps
+	// different steps (see gameStateOocssHandler).
+	instructionsNode: { $ref: 'dom.first!.instructions', at: 'gameView' },
 	instructionsView: {
-		render: {
-			template: { module: 'text!app/instructions/template.html' },
-			replace: { module: 'i18n!app/instructions/strings' },
-			css: { module: 'css!app/instructions/structure.css' },
-			at: { $ref: 'dom.first!.instructions', at: 'gameView' }
+		wire: {
+			spec: 'app/instructions/spec',
+			provide: {
+				$root: { $ref: 'instructionsNode' }
+			}
 		}
 	},
 
@@ -143,7 +144,7 @@ define({
 	// selectDoor using promise-aware AOP.  After the promise returned by
 	// selectDoor has resolved, this will get the current game status
 	// and hand it to gameStateMapper below.
-	instructionsOocssHandler: {
+	gameStateOocssHandler: {
 		literal: {},
 		properties: {
 			setGameState: { compose: 'controller.getStatus | gameStateMapper' }
