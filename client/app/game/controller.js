@@ -1,5 +1,5 @@
 (function (define) {
-define(['require', 'module'], function (require, module) {
+define(function (require, exports, module) {
 
 	var when;
 
@@ -164,5 +164,5 @@ define(['require', 'module'], function (require, module) {
 }(
 	typeof define == 'function' && define.amd
 		? define
-		: function (factory) { module.exports = factory(require); }
+		: function (factory) { module.exports = factory(require, exports, module); }
 ));
