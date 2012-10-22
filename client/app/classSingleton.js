@@ -4,9 +4,20 @@ define(function(require) {
 
 	var slice, replaceClasses;
 
+	// Borrow slice from Array
 	slice = Array.prototype.slice.call.bind(Array.prototype.slice);
+
+	// Use wire.js's replaceClasses utility
 	replaceClasses = require('wire/dom/transform/replaceClasses');
 
+	/**
+	 * Given an Array (technically, a set) of CSS classes, creates a cujojs/cola
+	 * data binder that ensures at most one of those classes is ever set on
+	 * the node(s) which the binder is managing
+	 *
+	 * @param  {Array} classes set of classes
+	 * @return {Function} data binding function
+	 */
 	return function(classes /*...*/) {
 		var replacer = replaceClasses({ group: slice(arguments) });
 
