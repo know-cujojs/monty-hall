@@ -75,10 +75,9 @@ define({
 
 	// Client interface to the game server API
 	gameApi: { wire: 'app/game/rest' },
-
-	// Fake implementation of the client interface that can be used
-	// for testing
-	// gameApi: { wire: 'app/game/fake' },
+	// FOR TESTING: Fake implementation of the client game API interface
+	// that can be used for testing.
+//	gameApi: { wire: 'app/game/fake' },
 
 	// Data driven view of the doors that is bound to the doors data.
 	// When door data changes (be it from the server or local), the changes
