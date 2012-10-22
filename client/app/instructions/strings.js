@@ -1,3 +1,4 @@
+// Localization file for the instructions view
 define({
 
 	titles: {

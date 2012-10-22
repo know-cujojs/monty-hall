@@ -3,16 +3,24 @@ define(function (require) {
 
 	var clicks, dom3, touch, integration;
 
+	// Load clicks library modules (User interaction capture)
 	clicks = require('clicks');
 	dom3 = require('clicks/events/dom3');
 	touch = require('clicks/events/touch');
 
-	// TODO replace integration/integration with integration once curl is updated to 0.7.x
-	// integration = require('integration');
-	integration = require('integration/integration');
+	// Load the integration library modules (Enterprise Integration Patterns in JS)
+	integration = require('integration');
 	require('integration/aggregators/batching');
 	require('integration/channels/pubsub');
-	
+
+	/**
+	 * Creates an object that will configure the clicks library to capture user
+	 * interactions (clicks, mouseovers, etc.), and send them, via the
+	 * Integration library, to the server for analysis.  This could be used
+	 * to analyze user behavior, for example.
+	 * @return {Object} object with two methods: start() and stop(), that, as
+	 * you might expect, start and stop collection of user interactions.
+	 */
 	return function () {
 		var bus;
 
@@ -41,7 +49,7 @@ define(function (require) {
 					bus.destroy();
 				}
 			}
-		}
+		};
 	};
 
 });
