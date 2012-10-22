@@ -3,6 +3,13 @@ define(function(require) {
 
 	var undef;
 
+	/**
+	 * A cujojs/cola identifier function that understands HATEOAS formatted
+	 * objects that have a rel="self" link.  Given an object, searches
+	 * for its rel="self" link and returns its href as the object's id.
+	 * @param  {Object} item any data item
+	 * @return {String|undefined} rel="self" href, if present, or undefined.
+	 */
 	return function(item) {
 		var links, id;
 
