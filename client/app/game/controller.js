@@ -14,7 +14,7 @@ define(['require', 'module'], function (require, module) {
 		gameApi: null,
 
 		/**
-		 * Method to pdates a single door
+		 * Method to update a single door
 		 * @required
 		 * @type {Function}
 		 */
@@ -47,7 +47,6 @@ define(['require', 'module'], function (require, module) {
 
 		_selectInitialDoor: function(door) {
 			return this.gameApi.selectDoor(door).then(function(selectedDoor) {
-				// TODO: this probably isn't the right place for this:
 				this.game.status = 'AWAITING_FINAL_SELECTION';
 
 				return this.game.doors
