@@ -1,5 +1,5 @@
 /*global module:false*/
-module.exports = function(grunt) {
+module.exports = function (grunt) {
 
 	var fs, json5;
 
@@ -13,7 +13,7 @@ module.exports = function(grunt) {
 		},
 
 		jshint: {
-			options: json5.parse(''+fs.readFileSync('.jshintrc'))
+			options: json5.parse('' + fs.readFileSync('.jshintrc'))
 		},
 
 		csslint: {

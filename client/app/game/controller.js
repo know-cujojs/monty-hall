@@ -1,166 +1,166 @@
 (function (define) {
-define(function (require, exports, module) {
+	define(function (require, exports, module) {
 
-	var when;
+		var when;
 
-	when = require('when');
-
-	/**
-	 * The controller object.  Although it is declared as a singleton object
-	 * the IOC Container (wire.js) will beget new instances using Object.create().
-	 * This is a very convenient way to define "constructor-less" objects.
-	 * using wire.js
-	 */
-	module.exports = {
+		when = require('when');
 
 		/**
-		 * The game API that manages the game and door state
-		 * @required
+		 * The controller object.  Although it is declared as a singleton object
+		 * the IOC Container (wire.js) will beget new instances using Object.create().
+		 * This is a very convenient way to define "constructor-less" objects.
+		 * using wire.js
 		 */
-		gameApi: null,
+		module.exports = {
 
-		/**
-		 * Method to update a single door
-		 * @required
-		 * @type {Function}
-		 * @param {Object} door Door to update
-		 */
-		_updateDoor: null,
+			/**
+			 * The game API that manages the game and door state
+			 * @required
+			 */
+			gameApi: null,
 
-		/**
-		 * Selects a door on behalf of the player.  Takes the appropriate
-		 * action based on the current state of the game.
-		 * @param  {Object} door Door to select
-		 * @return {Promise} promise for the updated state of the door
-		 *  possibly as reported from the server
-		 */
-		selectDoor: function (door) {
-			// Can't select already-opened doors
-			if(door.status == 'OPENED') {
-				return door;
-			}
+			/**
+			 * Method to update a single door
+			 * @required
+			 * @type {Function}
+			 * @param {Object} door Door to update
+			 */
+			_updateDoor: null,
 
-			// This method changes the internal state of the controller
-			// so it can take appropriate action based on the current
-			// state of the game.
+			/**
+			 * Selects a door on behalf of the player.  Takes the appropriate
+			 * action based on the current state of the game.
+			 * @param  {Object} door Door to select
+			 * @return {Promise} promise for the updated state of the door
+			 *  possibly as reported from the server
+			 */
+			selectDoor: function (door) {
+				// Can't select already-opened doors
+				if (door.status == 'OPENED') {
+					return door;
+				}
 
-			var result = this._doSelectDoor(door);
+				// This method changes the internal state of the controller
+				// so it can take appropriate action based on the current
+				// state of the game.
 
-			if(this._doSelectDoor !== this._switchOrStay) {
-				this._doSelectDoor = this._switchOrStay;
-			} else {
-				this._doSelectDoor = noop;
-			}
+				var result = this._doSelectDoor(door);
 
-			return result;
-		},
+				if (this._doSelectDoor !== this._switchOrStay) {
+					this._doSelectDoor = this._switchOrStay;
+				} else {
+					this._doSelectDoor = noop;
+				}
 
-		/**
-		 * Gets the current game state
-		 * @return {String} string constant representing the current game state
-		 */
-		getStatus: function () {
-			return this.game && this.game.status;
-		},
+				return result;
+			},
 
-		/**
-		 * Helper method that represents "do the right thing when a door is
-		 * selected".  This method is overwritten (see selectDoor above) based
-		 * on the current state of the game.
-		 * @param  {Object} door Door to select
-		 * @return {Promise} promise for the selected door, containing its updated  status
-		 */
-		_doSelectDoor: function(door) {
-			return this._selectInitialDoor(door);
-		},
+			/**
+			 * Gets the current game state
+			 * @return {String} string constant representing the current game state
+			 */
+			getStatus: function () {
+				return this.game && this.game.status;
+			},
 
-		/**
-		 * When the game is in its initial state, this method is called when the player
-		 * makes his/her initial door selection.
-		 * @param  {Object} door Door to be selected
-		 * @return {Promise} promise for the selected door, containing its updates status
-		 */
-		_selectInitialDoor: function(door) {
-			return this.gameApi.selectDoor(door).then(function(selectedDoor) {
-				this.game.status = 'AWAITING_FINAL_SELECTION';
+			/**
+			 * Helper method that represents "do the right thing when a door is
+			 * selected".  This method is overwritten (see selectDoor above) based
+			 * on the current state of the game.
+			 * @param  {Object} door Door to select
+			 * @return {Promise} promise for the selected door, containing its updated  status
+			 */
+			_doSelectDoor: function (door) {
+				return this._selectInitialDoor(door);
+			},
 
-				return this.game.doors
-					.then(this._updateDoors.bind(this))
-					.then(function() {
-						return selectedDoor;
-					});
-			}.bind(this));
-		},
+			/**
+			 * When the game is in its initial state, this method is called when the player
+			 * makes his/her initial door selection.
+			 * @param  {Object} door Door to be selected
+			 * @return {Promise} promise for the selected door, containing its updates status
+			 */
+			_selectInitialDoor: function (door) {
+				return this.gameApi.selectDoor(door).then(function (selectedDoor) {
+					this.game.status = 'AWAITING_FINAL_SELECTION';
 
-		/**
-		 * When the game is in the state where the player must decide to switch
-		 * or stay, this method is called when the user selects a door.
-		 * @param  {Object} door Door to be selected
-		 * @return {Promise} promise for the selected door, containing its updated status
-		 */
-		_switchOrStay: function(door) {
-			if(door.status == 'OPENED') {
-				return;
-			}
+					return this.game.doors
+						.then(this._updateDoors.bind(this))
+						.then(function () {
+							return selectedDoor;
+						});
+				}.bind(this));
+			},
 
-			var self, game, updateDoors;
+			/**
+			 * When the game is in the state where the player must decide to switch
+			 * or stay, this method is called when the user selects a door.
+			 * @param  {Object} door Door to be selected
+			 * @return {Promise} promise for the selected door, containing its updated status
+			 */
+			_switchOrStay: function (door) {
+				if (door.status == 'OPENED') {
+					return;
+				}
 
-			self = this;
-			game = this.game;
-			updateDoors = this._updateDoors.bind(this);
+				var self, game, updateDoors;
 
-			return this.gameApi.openDoor(door).then(function(openedDoor) {
-				return game.doors
-					.then(updateDoors)
-					.then(function() {
-						return game.self;
-					})
-					.then(function(game) {
-						self.game = game;
-						return openedDoor;
-					});
-			});
-		},
+				self = this;
+				game = this.game;
+				updateDoors = this._updateDoors.bind(this);
 
-		/**
-		 * Starts a new game
-		 * @return {Promise} promise for a newly created game
-		 */
-		_startGame: function() {
-			var self;
-
-			self = this;
-
-			return this.gameApi.createGame()
-				.then(function(game) {
-					self.game = game;
-					return game.doors;
-				})
-				.then(this._updateDoors.bind(this))
-				.then(function() {
-					return self.game;
+				return this.gameApi.openDoor(door).then(function (openedDoor) {
+					return game.doors
+						.then(updateDoors)
+						.then(function () {
+							return game.self;
+						})
+						.then(function (game) {
+							self.game = game;
+							return openedDoor;
+						});
 				});
-		},
+			},
+
+			/**
+			 * Starts a new game
+			 * @return {Promise} promise for a newly created game
+			 */
+			_startGame: function () {
+				var self;
+
+				self = this;
+
+				return this.gameApi.createGame()
+					.then(function (game) {
+						self.game = game;
+						return game.doors;
+					})
+					.then(this._updateDoors.bind(this))
+					.then(function () {
+						return self.game;
+					});
+			},
+
+			/**
+			 * When new or updated door data has been received from the server,
+			 * this method is invoked to update the view model, and thus reflect
+			 * the data changes into the view.
+			 * @param  {Object} doorData server response containing each door
+			 * @param  {Array} doorData.doors Array of door data
+			 */
+			_updateDoors: function (doorData) {
+				doorData.doors.forEach(this._updateDoor);
+			}
+
+		};
 
 		/**
-		 * When new or updated door data has been received from the server,
-		 * this method is invoked to update the view model, and thus reflect
-		 * the data changes into the view.
-		 * @param  {Object} doorData server response containing each door
-		 * @param  {Array} doorData.doors Array of door data
+		 * Simple no-op function to help manage game state
 		 */
-		_updateDoors: function(doorData) {
-			doorData.doors.forEach(this._updateDoor);
-		}
+		function noop() {}
 
-	};
-
-	/**
-	 * Simple no-op function to help manage game state
-	 */
-	function noop() {}
-
-});
+	});
 }(
 	typeof define == 'function' && define.amd
 		? define

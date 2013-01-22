@@ -69,7 +69,8 @@ define({
 	// clicks client for the newly started game.  See the afterResolving above
 	clientForClicksInvoker: {
 		invoker: {
-			method: 'clientFor', args: ['clicks']
+			method: 'clientFor',
+			args: ['clicks']
 		}
 	},
 
@@ -165,7 +166,7 @@ define({
 			args: {
 				node: { $ref: 'root' },
 				map: {
-					AWAITING_INITIAL_SELECTION: 'awaiting-initial-selection' ,
+					AWAITING_INITIAL_SELECTION: 'awaiting-initial-selection',
 					AWAITING_FINAL_SELECTION: 'awaiting-final-selection',
 					WON: 'won',
 					LOST: 'lost'

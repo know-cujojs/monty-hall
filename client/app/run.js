@@ -1,5 +1,4 @@
-/*global curl:true*/
-(function(curl) {
+(function (curl) {
 
 	var config = {
 
@@ -50,4 +49,4 @@
 	// bootstrap our app by wiring the main spec
 	curl(config, ['wire!app/main']);
 
-})(curl);
+})(this.curl);
