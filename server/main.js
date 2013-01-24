@@ -5,7 +5,7 @@ express = require('express');
 
 path = process.env.PWD + '/client';
 host = '127.0.0.1';
-port = 7777;
+port = 8000;
 
 app = express();
 app.configure(function () {

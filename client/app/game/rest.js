@@ -7,8 +7,7 @@ define({
 		create: 'app/game/restApi',
 		properties: {
 			gameClient: { $ref: 'gameClient' },
-			// host: 'https://monty-hall.cloudfoundry.com/games'
-			host: 'http://localhost:8080/monty-hall/games'
+			host: 'https://monty-hall.cloudfoundry.com/games'
 		}
 	},
 
