@@ -1,7 +1,36 @@
-(function (global, define) {
+/*
+ * Copyright (c) 2012 VMware, Inc. All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
 
-	define(['../../rest', 'when', '../UrlBuilder', '../util/pubsub'], function (defaultClient, when, UrlBuilder, pubsub) {
-		"use strict";
+(function (define, global) {
+	'use strict';
+
+	define(function (require) {
+
+		var defaultClient, when, UrlBuilder, pubsub;
+
+		defaultClient = require('../../rest');
+		when = require('when');
+		UrlBuilder = require('../UrlBuilder');
+		pubsub = require('../util/pubsub');
 
 		function defaultOAuthCallback(hash) {
 			var params, queryString, regex, m;
@@ -16,6 +45,7 @@
 				m = regex.exec(queryString);
 			} while (m);
 
+			/*jshint camelcase:false */
 			pubsub.publish(params.state, params.token_type + ' ' + params.access_token);
 		}
 
@@ -47,13 +77,13 @@
 		 * 'parent' window.
 		 *
 		 * @param {Client} [client] client to wrap
-		 * @param {String} [config.token] pre-configured authentication token
-		 * @param {String} config.clientId OAuth clientId
-		 * @param {String} config.scope OAuth scope
-		 * @param {String} config.authorizationUrlBase URL of the authorization server
-		 * @param {String} [config.redirectUrl] callback URL from the authorization server.  Will be converted to a fully qualified, absolute URL, if needed.  Default's to the window's location or base href.
+		 * @param {string} [config.token] pre-configured authentication token
+		 * @param {string} config.clientId OAuth clientId
+		 * @param {string} config.scope OAuth scope
+		 * @param {string} config.authorizationUrlBase URL of the authorization server
+		 * @param {string} [config.redirectUrl] callback URL from the authorization server.  Will be converted to a fully qualified, absolute URL, if needed.  Default's to the window's location or base href.
 		 * @param {Function} [config.windowStrategy] strategy for opening the authorization window, defaults to window.open
-		 * @param {String} [config.oAuthCallbackName='oAuthCallback'] name to register the callback as in global scope
+		 * @param {string} [config.oAuthCallbackName='oAuthCallback'] name to register the callback as in global scope
 		 * @param {Function} [config.oAuthCallback] callback function to receive OAuth URL fragment
 		 *
 		 * @returns {Client}
@@ -157,9 +187,7 @@
 	});
 
 }(
-	typeof global === 'undefined' ? this : global,
-	typeof define === 'function' ? define : function (deps, factory) {
-		module.exports = factory.apply(this, deps.map(require));
-	}
+	typeof define === 'function' && define.amd ? define : function (factory) { module.exports = factory(require); },
+	typeof global === 'undefined' ? this : global
 	// Boilerplate for AMD and Node
 ));

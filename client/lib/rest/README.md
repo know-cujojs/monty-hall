@@ -1,5 +1,5 @@
-Rest Template
-=============
+Rest.js
+=======
 
 Just enough client, as you need it.  Make HTTP requests from a browser or Node.js applying the only the client features you need.  Configure a client once, and share it safely throughout your application.  Easily extend with interceptors that wrap the request and/or response, or MIME type converters for rich data formats.
 
@@ -8,25 +8,29 @@ Build Status
 ------------
 
 <table>
-  <tr><td>Master</td><td><a href="http://travis-ci.org/scothis/rest" target="_blank"><img src="https://secure.travis-ci.org/scothis/rest.png?branch=master" /></a></tr>
-  <tr><td>Development</td><td><a href="http://travis-ci.org/scothis/rest" target="_blank"><img src="https://secure.travis-ci.org/scothis/rest.png?branch=dev" /></a></tr>
+  <tr><td>Master</td><td><a href="http://travis-ci.org/s2js/rest" target="_blank"><img src="https://secure.travis-ci.org/s2js/rest.png?branch=master" /></a></tr>
+  <tr><td>Development</td><td><a href="http://travis-ci.org/s2js/rest" target="_blank"><img src="https://secure.travis-ci.org/s2js/rest.png?branch=dev" /></a></tr>
 </table>
 
 
 Getting Started
 ---------------
 
-Rest can be installed via NPM, or from source.
+Rest can be installed via [npm](https://npmjs.org/), [Bower](http://twitter.github.com/bower/), or from source.
 
 To install without source:
 
     $ npm install rest
 
+or
+
+    $ bower install rest
+
 From source:
 
     $ npm install
 
-Rest is designed to run in a browser environment, utilizing [AMD modules](https://github.com/amdjs/amdjs-api/wiki/AMD), or within [Node.js](http://nodejs.org/).  [curl](https://github.com/cujojs/curl) is highly recommended as an AMD loader, although any loader should work.
+Rest.js is designed to run in a browser environment, utilizing [AMD modules](https://github.com/amdjs/amdjs-api/wiki/AMD), or within [Node.js](http://nodejs.org/).  [curl](https://github.com/cujojs/curl) is highly recommended as an AMD loader, although any loader should work.
 
 An ECMAScript 5 compatible environment is assumed.  Older browsers, ::cough:: IE, that do not support ES5 natively can be shimmed.  Any shim should work, although we've tested against cujo's [poly](https://github.com/cujojs/poly)
 
@@ -34,7 +38,7 @@ An ECMAScript 5 compatible environment is assumed.  Older browsers, ::cough:: IE
 Usage
 -----
 
-Using Rest is easy.  The core clients provide limited functionality around the request and response lifecycle.  The input and response objects are normalized to support portability between browser and server environments.
+Using Rest.js is easy.  The core clients provide limited functionality around the request and response lifecycle.  The input and response objects are normalized to support portability between browser and server environments.
 
 The response from a client is a promise that is resolved when the remote request finishes.
 
@@ -123,7 +127,7 @@ Built in converters are available under `rest/mime/type/{type}`, as an example, 
 Reporting Issues
 ----------------
 
-Please report issues on [GitHub](https://github.com/scothis/rest/issues).  Include a brief description of the error, information about the runtime (including shims) and any error messages.
+Please report issues on [GitHub](https://github.com/s2js/rest/issues).  Include a brief description of the error, information about the runtime (including shims) and any error messages.
 
 Feature requests are also welcome.
 
@@ -131,7 +135,7 @@ Feature requests are also welcome.
 Running the Tests
 -----------------
 
-The test suite can be run in two different modes: in node, or in a browser.  We use [Buster.JS](http://busterjs.org/) as the test driver, buster is installed automatically with other dependencies.
+The test suite can be run in two different modes: in node, or in a browser.  We use [npm](https://npmjs.org/) and [Buster.JS](http://busterjs.org/) as the test driver, buster is installed automatically with other dependencies.
 
 Before running the test suite for the first time:
 
@@ -147,17 +151,48 @@ To run the suite in a browser:
     browse to http://localhost:8282/ in the browser(s) you wish to test.  It can take a few seconds to start.
 
 
-Thanks
-------
+Contributors
+------------
 
-* Arjen Poutsma - Creator of Spring's RestTemplate
-* Brian Cavalier - cujo.js lead
-* John Hann - cujo.js lead
-* VMware - for allowing this project to be open sourced
+- Scott Andrews <andrewss@vmware.com>
+- Jeremy Grelle <jgrelle@vmware.com>
+
+Please see CONTRIBUTING.md for details on how to contribute to this project.
+
+
+Copyright
+---------
+
+Integration is made available under the MIT license.  See LICENSE.txt for details.
+
+Copyright (c) 2012-2013 VMware, Inc. All Rights Reserved.
+
+VMware, Inc.
+3401 Hillview Avenue
+Palo Alto, CA 94304
 
 
 Change Log
 ----------
+
+0.8.4
+- Bower installable, with dependencies
+- node client's response.raw includes ClientResquest and ClientResponse objects
+- basicAuth interceptor correctly indicates auth method
+
+0.8.3
+- moving from the 'scothis' to the 's2js' organization, no functional changes
+
+0.8.2
+- requests may be canceled
+- timeout incerceptor that cancels the request unless it finishes before the timeout
+- retry interceptor handles error respones by retrying the request after an elapsed period
+- error interceptor handlers may recover from errors, a rejected promise must be returned in order to preserve the error state
+- response objects, with an error property, are used for client errors instead of the thrown value
+- interceptor response handlers recieve the interceptor's client rather then the next client in the chain
+- interceptor request handlers may provide a response
+- convert modules to UMD format; no functional impact
+- replaced rest/util/base64 with an MIT licenced impl; no functional impact
 
 0.8.1
 - fixed bug where http method may be overwritten

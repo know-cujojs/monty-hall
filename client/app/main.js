@@ -58,7 +58,7 @@ define({
 				'click:.doorway': 'doors.findItem | selectDoor'
 			}
 		},
-		afterResolving: {
+		afterFulfilling: {
 			'_startGame': 'clientForClicksInvoker | clickStream.start'
 		},
 		ready: '_startGame'
@@ -66,7 +66,7 @@ define({
 
 	// A wire invoker that will call clientFor('clicks') on whatever
 	// is passed to it.  We use it as a connection transform to get the
-	// clicks client for the newly started game.  See the afterResolving above
+	// clicks client for the newly started game.  See the afterFulfilling above
 	clientForClicksInvoker: {
 		invoker: {
 			method: 'clientFor',
@@ -104,7 +104,7 @@ define({
 
 	// Observable door data to which the doorsView is bound. Updates
 	// to this will be reflected in the view and vice versa
-	doors: { create: 'cola/Hub' },
+	doors: { create: 'cola/Collection' },
 
 	// Click stream aggregator for analytics
 	clickStream: { create: 'app/game/clickStream' },
@@ -149,12 +149,12 @@ define({
 		properties: {
 			setGameState: { compose: 'controller.getStatus | gameStateMapper' }
 		},
-		afterResolving: {
+		afterFulfilling: {
 			'controller.selectDoor': 'setGameState'
 		},
 		// we need to run setGameState at "ready" since the
 		// controller's "ready" may be called before our
-		// "afterResolving" advice is applied
+		// "afterFulfilling" advice is applied
 		ready: 'setGameState'
 	},
 
@@ -176,7 +176,7 @@ define({
 	},
 
 	plugins: [
-		// { module: 'wire/debug' },
+		{ module: 'wire/debug' },
 		{ module: 'wire/sizzle', classes: { init: 'loading' }},
 		// { module: 'wire/dom', classes: { init: 'loading' }},
 		{ module: 'wire/dom/render' },

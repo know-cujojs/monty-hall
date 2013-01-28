@@ -1,13 +1,14 @@
 {
 	"name": "wire",
-	"version": "0.9.0-dev",
+	"version": "0.9.1",
 	"description": "A light, fast, flexible Javascript IOC container.",
 	"keywords": [
 		"ioc",
 		"aop",
 		"dependency injection",
 		"dependency inversion",
-		"application composition"
+		"application composition",
+		"cujo"
 	],
 	"licenses": [
 		{
@@ -39,8 +40,8 @@
 		}
 	],
 	"dependencies": {
-		"meld": "~0.7",
-		"when": ">=1.4.0 <2.0.0"
+		"meld": "~1",
+		"when": ">=1.5.0 <2.0.0"
 	},
 	"devDependencies": {
 		"buster": "~0.6"

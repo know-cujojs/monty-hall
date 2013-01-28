@@ -18,8 +18,7 @@ define({
 			args: [
 				{ $ref: 'baseClient' },
 				{
-					target: '',
-					client: { $ref: 'baseClient' }
+					target: ''
 				}
 			]
 		}

@@ -273,7 +273,7 @@ function(require, when, timeout, array, object, createModuleLoader, Lifecycle, R
 			// Once all modules have been loaded, resolve modulesReady
 			whenAll(modulesToLoad, function (modules) {
 				modulesReady.resolve(modules);
-				modulesToLoad = null;
+				modulesToLoad = undef;
 			}, modulesReady.reject);
 		}
 
@@ -304,17 +304,22 @@ function(require, when, timeout, array, object, createModuleLoader, Lifecycle, R
 				deleteAll(components);
 				deleteAll(scope);
 
-				for(i = 0, len = proxiedComponents.length; i < len; i++) {
-					proxiedComponents[i].destroy();
-				}
+				return when.reduce(proxiedComponents, function(p, proxied) {
+					when(p, function() {
+						proxied.destroy();
+					});
+				}, undef)
+				.then(function() {
+					// Free Objects
+					components = scope = parent
+						= resolvers = factories = facets = listeners
+						= wireApi = proxiedComponents = proxiers = plugins
+						= undef;
 
-				// Free Objects
-				components = scope = parent
-					= resolvers = factories = facets = listeners
-					= wireApi = proxiedComponents = proxiers = plugins
-					= undef;
+					return scopeDestroyed;
 
-				return scopeDestroyed;
+				});
+
 			});
 		}
 
@@ -437,6 +442,7 @@ function(require, when, timeout, array, object, createModuleLoader, Lifecycle, R
 				return when(module.wire$plugin(scopeReady.promise, scopeDestroyed.promise, spec),
 					function(plugin) {
 						plugin && registerPlugin(plugin);
+						return module;
 					}
 				);
 			}

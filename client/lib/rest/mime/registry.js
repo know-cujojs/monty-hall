@@ -1,17 +1,45 @@
-(function (define, global, process) {
+/*
+ * Copyright (c) 2012 VMware, Inc. All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
 
-	// include ./type/text/plain and ./type/application/json as hints to a build tool
-	define(['when', 'require', './type/text/plain', './type/application/json'], function (when, require) {
+(function (define) {
+	'use strict';
 
-		var load, registry;
+	define(function (require) {
 
-		registry = {};
+		var when, load, registry;
+
+		when = require('when');
+
+		// include text/plain and application/json by default
+		registry = {
+			'text/plain': require('./type/text/plain'),
+			'application/json': require('./type/application/json')
+		};
 
 		/**
 		 * Lookup the converter for a MIME type
 		 *
-		 * @param {String} mime the MIME type
-		 * @return {*} the converter for the MIME type
+		 * @param {string} mime the MIME type
+		 * @return the converter for the MIME type
 		 */
 		function lookup(mime) {
 			// ignore charset if included
@@ -25,15 +53,15 @@
 		/**
 		 * Register a custom converter for a MIME type
 		 *
-		 * @param {String} mime the MIME type
-		 * @param {*} converter the converter for the MIME type
-		 * @return {*} the converter
+		 * @param {string} mime the MIME type
+		 * @param converter the converter for the MIME type
+		 * @return the converter
 		 */
 		function register(mime, converter) {
 			return registry[mime] = converter;
 		}
 
-		function load_amd(mime) {
+		function loadAMD(mime) {
 			var d, timeout;
 
 			d = when.defer();
@@ -54,7 +82,7 @@
 			return d.promise;
 		}
 
-		function load_node(mime) {
+		function loadNode(mime) {
 			var d = when.defer();
 
 			try {
@@ -70,12 +98,10 @@
 		/**
 		 * Attempts to resolve a new converter
 		 *
-		 * @param {String} mime the MIME type
-		 * @return {*} the converter for the MIME type
+		 * @param {string} mime the MIME type
+		 * @return the converter for the MIME type
 		 */
-		load = (
-			typeof require === 'function' && require.amd ? load_amd : load_node
-		);
+		load = typeof require === 'function' && require.amd ? loadAMD : loadNode;
 
 		return {
 			lookup: lookup,
@@ -85,10 +111,6 @@
 	});
 
 }(
-	typeof define === 'function' ? define : function (deps, factory) {
-		module.exports = factory.apply(this, deps.map(function (dep) { return dep === 'require' ? require : require(dep); }));
-	},
-	typeof global === 'undefined' ? this : global,
-	typeof process === 'undefined' ? undefined : process
+	typeof define === 'function' && define.amd ? define : function (factory) { module.exports = factory(require); }
 	// Boilerplate for AMD and Node
 ));

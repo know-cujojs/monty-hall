@@ -19,17 +19,19 @@
   "volo": {
     "baseUrl": "client/lib",
     "dependencies": {
-      "curl": "github:cujojs/curl/0.6.7",
-      "when": "github:cujojs/when/1.5.1",
-      "meld": "github:cujojs/meld/1.0.0",
+      "curl": "github:cujojs/curl/0.7.3",
+      "when": "github:cujojs/when/1.7.1",
+      "meld": "github:cujojs/meld/1.2.0",
       "poly": "github:cujojs/poly/0.5.1",
-      "rest": "github:scothis/rest/v0.8.1",
+      "rest": "github:s2js/rest/v0.8.4",
       "clicks": "github:five-eleven/clicks/master",
-      "integration": "github:five-eleven/integration/master"
+      "integration": "github:five-eleven/integration/master",
+      "cola": "github:cujojs/cola/master",
+      "wire": "github:cujojs/wire/0.9.1"
     }
   },
   "scripts": {
-  	"start": "node server/main.js",
-  	"test": "buster test"
+    "start": "node server/main.js",
+    "test": "buster test"
   }
 }

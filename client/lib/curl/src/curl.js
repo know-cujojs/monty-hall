@@ -9,42 +9,46 @@
  * Licensed under the MIT License at:
  * 		http://www.opensource.org/licenses/mit-license.php
  *
- * @version 0.6.7
  */
 (function (global) {
 //"use strict"; don't restore this until the config routine is refactored
 	var
-		version = '0.6.7',
+		version = '0.7.3',
 		curlName = 'curl',
-		userCfg = global[curlName],
+		defineName = 'define',
+		userCfg,
 		prevCurl,
 		prevDefine,
 		doc = global.document,
 		head = doc && (doc['head'] || doc.getElementsByTagName('head')[0]),
+		// to keep IE from crying, we need to put scripts before any
+		// <base> elements, but after any <meta>. this should do it:
+		insertBeforeEl = head && head.getElementsByTagName('base')[0] || null,
 		// constants / flags
 		msgUsingExports = {},
 		msgFactoryExecuted = {},
-		interactive = {},
 		// this is the list of scripts that IE is loading. one of these will
 		// be the "interactive" script. too bad IE doesn't send a readystatechange
 		// event to tell us exactly which one.
 		activeScripts = {},
+		// readyStates for IE6-9
+		readyStates = 'addEventListener' in global ? {} : { 'loaded': 1, 'complete': 1 },
 		// these are always handy :)
 		cleanPrototype = {},
 		toString = cleanPrototype.toString,
 		undef,
-		// script ready states that signify it's loaded
-		readyStates = { 'loaded': 1, 'interactive': interactive, 'complete': 1 },
 		// local cache of resource definitions (lightweight promises)
 		cache = {},
+		// local url cache
+		urlCache = {},
 		// preload are files that must be loaded before any others
 		preload = false,
 		// net to catch anonymous define calls' arguments (non-IE browsers)
 		argsNet,
-		// RegExp's used later, "cached" here
-		dontAddExtRx = /\?/,
+		// RegExp's used later, pre-compiled here
+		dontAddExtRx = /\?|\.js\b/,
 		absUrlRx = /^\/|^[^:]+:\/\//,
-		findLeadingDotsRx = /(\.)(\.?)(?:$|\/([^\.\/]+.*)?)/g, // /(?:^|\/)(\.)(\.?)\/?/g,
+		findDotsRx = /(\.)(\.?)(?:$|\/([^\.\/]+.*)?)/g,
 		removeCommentsRx = /\/\*[\s\S]*?\*\/|(?:[^\\])\/\/.*?[\n\r]/g,
 		findRValueRequiresRx = /require\s*\(\s*["']([^"']+)["']\s*\)|(?:[^\\]?)(["'])/g,
 		cjsGetters,
@@ -60,14 +64,22 @@
 		var main;
 
 		descriptor.path = removeEndSlash(descriptor['path'] || descriptor['location'] || '');
-		main = removeEndSlash(descriptor['main']) || 'main';
-		if (main.charAt(0) != '.') main = './' + main;
+		main = descriptor['main'] || './main';
+		if (!isRelUrl(main)) main = './' + main;
 		// trailing slashes trick reduceLeadingDots to see them as base ids
 		descriptor.main = reduceLeadingDots(main, descriptor.name + '/');
-		descriptor.mainPath = reduceLeadingDots(main, descriptor.path + '/');
+		//if (isRelUrl(descriptor.main)) throw new Error('invalid main (' + main + ') in ' + descriptor.name);
 		descriptor.config = descriptor['config'];
 
 		return descriptor;
+	}
+
+	function isRelUrl (it) {
+		return it.charAt(0) == '.';
+	}
+
+	function isAbsUrl (it) {
+		return absUrlRx.test(it);
 	}
 
 	function joinPath (path, file) {
@@ -83,22 +95,35 @@
 		// module ids of "." and ".." as meaning "grab the module whose name is
 		// the same as my folder or parent folder".  These special module ids
 		// are not included in the AMD spec but seem to work in node.js, too.
-		var levels, removeLevels, isRelative;
+		var removeLevels, normId, levels, isRelative, diff;
+
 		removeLevels = 1;
-		childId = childId.replace(findLeadingDotsRx, function (m, dot, doubleDot, remainder) {
-			if (doubleDot) removeLevels++;
+		normId = childId;
+
+		// remove leading dots and count levels
+		if (isRelUrl(normId)) {
 			isRelative = true;
-			return remainder || '';
-		});
-		// TODO: throw if removeLevels > baseId levels in debug module
+			normId = normId.replace(findDotsRx, function (m, dot, doubleDot, remainder) {
+				if (doubleDot) removeLevels++;
+				return remainder || '';
+			});
+		}
+
 		if (isRelative) {
 			levels = baseId.split('/');
-			levels.splice(levels.length - removeLevels, removeLevels);
-			// childId || [] is a trick to not concat if no childId
-			return levels.concat(childId || []).join('/');
+			diff = levels.length - removeLevels;
+			if (diff < 0) {
+				// this is an attempt to navigate above parent module.
+				// maybe dev wants a url or something. punt and return url;
+				return childId;
+			}
+			levels.splice(diff, removeLevels);
+			// normId || [] prevents concat from adding extra "/" when
+			// normId is reduced to a blank string
+			return levels.concat(normId || []).join('/');
 		}
 		else {
-			return childId;
+			return normId;
 		}
 	}
 
@@ -217,30 +242,77 @@
 
 	core = {
 
+		/**
+		 * * reduceLeadingDots of id against parentId
+		 *		- if there are too many dots (path goes beyond parent), it's a url
+		 *			- return reduceLeadingDots of id against baseUrl + parentId;
+		 *	* if id is a url (starts with dots or slash or protocol)
+		 *		- pathInfo = { config: userCfg, url: url }
+		 *	* if not a url, id-to-id transform here.
+		 *		- main module expansion
+		 *		- plugin prefix expansion
+		 *		- coordinate main module expansion with plugin expansion
+		 *			- main module expansion happens first
+		 *		- future: other transforms?
+		 * @param id
+		 * @param parentId
+		 * @param cfg
+		 * @return {*}
+		 */
+		toAbsId: function (id, parentId, cfg) {
+			var absId, pluginId, parts;
+
+			absId = reduceLeadingDots(id, parentId);
+
+			// if this is still a relative path, it must be a url
+			// so just punt, otherwise...
+			if (isRelUrl(absId)) return absId;
+
+			// plugin id split
+			parts = pluginParts(absId);
+			pluginId = parts.pluginId;
+			absId = pluginId || parts.resourceId;
+
+			// main id expansion
+			if (absId in cfg.pathMap) {
+				absId = cfg.pathMap[absId].main || absId;
+			}
+
+			// plugin id expansion
+			if (pluginId) {
+				if (pluginId.indexOf('/') < 0 && !(pluginId in cfg.pathMap)) {
+					absId = joinPath(cfg.pluginPath, pluginId);
+				}
+				absId = absId + '!' + parts.resourceId;
+			}
+
+			return absId;
+		},
+
 		createContext: function (cfg, baseId, depNames, isPreload) {
 
 			var def;
 
 			def = new Promise();
-			def.ctxId = def.id = baseId || ''; // '' == global
+			def.id = baseId || ''; // '' == global
 			def.isPreload = isPreload;
 			def.depNames = depNames;
+			def.config = cfg;
 
 			// functions that dependencies will use:
 
 			function toAbsId (childId) {
-				return reduceLeadingDots(childId, def.ctxId);
+				return core.toAbsId(childId, def.id, cfg);
 			}
 
 			function toUrl (n) {
-				// even though internally, we don't seem to need to do
-				// toAbsId, the AMD spec says we need to do this for plugins.
-				// also, the spec states that we should not append an extension
-				// in this function.
+				// the AMD spec states that we should not append an extension
+				// in this function since it could already be appended.
+				// we need to use toAbsId in case this is a module id.
 				return core.resolvePathInfo(toAbsId(n), cfg).url;
 			}
 
-			function localRequire (ids, callback) {
+			function localRequire (ids, callback, errback) {
 				var cb, rvid, childDef, earlyExport;
 
 				// this is public, so send pure function
@@ -249,24 +321,23 @@
 
 				// RValue require (CommonJS)
 				if (isType(ids, 'String')) {
+					if (cb) {
+						throw new Error('require(id, callback) not allowed');
+					}
 					// return resource
 					rvid = toAbsId(ids);
 					childDef = cache[rvid];
-					earlyExport = isPromise(childDef) && childDef.exports;
 					if (!(rvid in cache)) {
 						// this should only happen when devs attempt their own
 						// manual wrapping of cjs modules or get confused with
 						// the callback syntax:
 						throw new Error('Module not resolved: '  + rvid);
 					}
-					if (cb) {
-						throw new Error('require(id, callback) not allowed');
-					}
+					earlyExport = isPromise(childDef) && childDef.exports;
 					return earlyExport || childDef;
 				}
 				else {
-					// use same id so that relative modules are normalized correctly
-					when(core.getDeps(core.createContext(cfg, def.ctxId, ids, isPreload)), cb);
+					when(core.getDeps(core.createContext(cfg, def.id, ids, isPreload)), cb, errback);
 				}
 			}
 
@@ -277,11 +348,10 @@
 			return def;
 		},
 
-		createResourceDef: function (cfg, id, isPreload, optCtxId) {
+		createResourceDef: function (cfg, id, isPreload) {
 			var def, origResolve, execute;
 
 			def = core.createContext(cfg, id, undef, isPreload);
-			def.ctxId = optCtxId == undef ? id : optCtxId;
 			origResolve = def.resolve;
 
 			// using countdown to only execute definition function once
@@ -299,7 +369,7 @@
 			// before resolving
 			def.resolve = function resolve (deps) {
 				when(isPreload || preload, function () {
-					origResolve((cache[def.id] = execute(deps)));
+					origResolve((cache[def.id] = urlCache[def.url] = execute(deps)));
 				});
 			};
 
@@ -319,11 +389,11 @@
 			return def;
 		},
 
-		createPluginDef: function (cfg, id, isPreload, ctxId) {
+		createPluginDef: function (cfg, id, resId, isPreload) {
 			var def;
 
-			def = core.createContext(cfg, id, undef, isPreload);
-			def.ctxId = ctxId;
+			// use resource id for local require and toAbsId
+			def = core.createContext(cfg, resId, undef, isPreload);
 
 			return def;
 		},
@@ -342,7 +412,8 @@
 				module = def.module = {
 					'id': def.id,
 					'uri': core.getDefUrl(def),
-					'exports': core.getCjsExports(def)
+					'exports': core.getCjsExports(def),
+					'config': function () { return def.config; }
 				};
 				module.exports = module['exports']; // oh closure compiler!
 			}
@@ -350,71 +421,119 @@
 		},
 
 		getDefUrl: function (def) {
-			// note: don't look up an anon module's id from it's own toUrl cuz
-			// the parent's config was used to find this module
-			// the toUrl fallback is for named modules in built files
-			// which must have absolute ids.
-			return def.url || (def.url = core.checkToAddJsExt(def.require['toUrl'](def.id)));
+			// note: this is used by cjs module.uri
+			return def.url || (def.url = core.checkToAddJsExt(def.require['toUrl'](def.id), def.config));
+		},
+
+		/**
+		 * Sets the curl() and define() APIs.
+		 * @param [cfg] {Object|Null} set of config params. If missing or null,
+		 *   this function will set the default API!
+		 */
+		setApi: function (cfg) {
+			/*
+			scenarios:
+			1. global config sets apiName: "require"
+				- first call to config sets api
+				- second and later calls are ignored
+				- prevCurl cannot exist
+			2. no global config, first call to config() sets api
+				- first call to config has no api info
+				- second call to config sets api
+				- third and later calls must be ignored
+			3. global config that doesn't set api, first call does though
+				- same as #2
+			4. api info is never set
+				- how to know when to stop ignoring?
+
+			objectives:
+			1. fail before mistakenly overwriting global[curlName]
+			2. allow rename/relocate of curl() and define()
+			3. restore curl() if we overwrote it
+			 */
+
+			var apiName, defName, apiObj, defObj,
+				failMsg, okToOverwrite;
+
+			apiName = curlName;
+			defName = defineName;
+			apiObj = defObj = global;
+			failMsg = ' already exists';
+
+			// if we're not setting defaults
+			if (cfg) {
+				// is it ok to overwrite existing api functions?
+				okToOverwrite = cfg['overwriteApi'] || cfg.overwriteApi;
+				// allow dev to rename/relocate curl() to another object
+				apiName = cfg['apiName'] || cfg.apiName || apiName;
+				apiObj = cfg['apiContext'] || cfg.apiContext || apiObj;
+				// define() too
+				defName = cfg['defineName'] || cfg.defineName || defName;
+				defObj = cfg['defineContext'] || cfg.defineContext || defObj;
+
+				// curl() already existed, restore it if this is not a
+				// setDefaults pass. dev must be a good citizen and set
+				// apiName/apiContext (see below).
+				if (prevCurl && isType(prevCurl, 'Function')) {
+					// restore previous curl()
+					global[curlName] = prevCurl;
+				}
+				prevCurl = null; // don't check ever again
+				// ditto for define()
+				if (prevDefine && isType(prevDefine, 'Function')) {
+					// restore previous curl()
+					global[defineName] = prevDefine;
+				}
+				prevDefine = null; // don't check ever again
+
+				// check if we're mistakenly overwriting either api
+				// if we're configuring, and there's a curl(), and it's not
+				// ours -- and we're not explicitly overwriting -- throw!
+				// Note: if we're setting defaults, we *must* overwrite curl
+				// so that dev can configure it.  This is no different than
+				// noConflict()-type methods.
+				if (!okToOverwrite) {
+					if (apiObj[apiName] && apiObj[apiName] != _curl) {
+						throw new Error(apiName + failMsg);
+					}
+					// check if we're overwriting amd api
+					if (defObj[defName] && defObj[defName] != define) {
+						throw new Error(defName + failMsg);
+					}
+				}
+
+			}
+
+			// set curl api
+			apiObj[apiName] = _curl;
+
+			// set AMD public api: define()
+			defObj[defName] = define;
+
 		},
 
 		config: function (cfg) {
-			var hasCfg, defineName,
-				apiName, apiObj, defName, defObj, define;
+			var prevCfg, newCfg, pluginCfgs, p;
 
-			hasCfg = cfg;
-
-			defineName = 'define';
-
-			if (!cfg) cfg = {};
-
-			// allow dev to rename/relocate curl() to another object
-			apiName = cfg['apiName'] || curlName;
-			apiObj = cfg['apiContext'] || global;
-			// if the dev is overwriting an existing curl()
-			if (apiObj != global || apiName != curlName ? apiObj[apiName] : prevCurl && hasCfg) {
-				throw new Error(apiName + ' already exists');
+			// convert from closure-safe names
+			if ('baseUrl' in cfg) cfg.baseUrl = cfg['baseUrl'];
+			if ('main' in cfg) cfg.main = cfg['main'];
+			if ('preloads' in cfg) cfg.preloads = cfg['preloads'];
+			if ('pluginPath' in cfg) cfg.pluginPath = cfg['pluginPath'];
+			if ('dontAddFileExt' in cfg || cfg.dontAddFileExt) {
+				cfg.dontAddFileExt = new RegExp(cfg['dontAddFileExt'] || cfg.dontAddFileExt);
 			}
-			apiObj[apiName] = _curl;
-			// restore previous curl
-			if (prevCurl && hasCfg) global[curlName] = prevCurl;
 
-			// allow dev to rename/relocate define() to another object
-			defName = cfg['defineName'] || defineName;
-			defObj = cfg['defineContext'] || global;
-			if (defObj != global || defName != defineName ? defObj[defName] : prevDefine && hasCfg) {
-				throw new Error(defName + ' already exists');
-			}
-			defObj[defName] = define = function () {
-				// wrap inner _define so it can be replaced without losing define.amd
-				var args = core.fixArgs(arguments);
-				_define(args);
-			};
-			// restore previous define
-			if (prevDefine && hasCfg) global[defineName] = prevDefine;
-
-			// indicate our capabilities:
-			define['amd'] = { 'plugins': true, 'jQuery': true, 'curl': version };
-
-			// switch to re-runnable config
-			if (hasCfg) core.config = core.moreConfig;
-
-			return core.moreConfig(cfg);
-		},
-
-		moreConfig: function (cfg, prevCfg) {
-			var newCfg, pluginCfgs;
-
-			if (!prevCfg) prevCfg = {};
+			prevCfg = userCfg;
 			newCfg = beget(prevCfg, cfg);
-
-			// set defaults and convert from closure-safe names
-			newCfg.baseUrl = newCfg['baseUrl'] || '';
-			newCfg.pluginPath = newCfg['pluginPath'] || 'curl/plugin';
 
 			// create object to hold path map.
 			// each plugin and package will have its own pathMap, too.
 			newCfg.pathMap = beget(prevCfg.pathMap);
-			pluginCfgs = newCfg.plugins = beget(prevCfg.plugins, cfg['plugins']);
+			pluginCfgs = cfg['plugins'] || {};
+			newCfg.plugins = beget(prevCfg.plugins);
+			newCfg.paths = beget(prevCfg.paths, cfg.paths);
+			newCfg.packages = beget(prevCfg.packages, cfg.packages);
 
 			// temporary arrays of paths. this will be converted to
 			// a regexp for fast path parsing.
@@ -427,12 +546,15 @@
 				var id, pluginId, data, parts, currCfg, info;
 				for (var name in coll) {
 					data = coll[name];
+					if (isType(data, 'String')) data = {
+						path: coll[name]
+					};
 					// grab the package id, if specified. default to
-					// property name.
-					data.name = data['id'] || data['name'] || name;
+					// property name, if missing.
+					data.name = data.name || name;
 					currCfg = newCfg;
-					// don't remove `|| name` since data may be a string, not an object
-					parts = pluginParts(removeEndSlash(data.name || name));
+					// check if this is a plugin-specific path
+					parts = pluginParts(removeEndSlash(data.name));
 					id = parts.resourceId;
 					pluginId = parts.pluginId;
 					if (pluginId) {
@@ -448,9 +570,10 @@
 					}
 					if (isPkg) {
 						info = normalizePkgDescriptor(data);
+						if (info.config) info.config = beget(newCfg, info.config);
 					}
 					else {
-						info = { path: removeEndSlash(data) };
+						info = { path: removeEndSlash(data.path) };
 					}
 					info.specificity = id.split('/').length;
 					if (id) {
@@ -461,7 +584,7 @@
 						// naked plugin name signifies baseUrl for plugin
 						// resources. baseUrl could be relative to global
 						// baseUrl.
-						currCfg.baseUrl = core.resolveUrl(data, newCfg);
+						currCfg.baseUrl = core.resolveUrl(data.path, newCfg);
 					}
 				}
 			}
@@ -470,7 +593,7 @@
 			function convertPathMatcher (cfg) {
 				var pathMap = cfg.pathMap;
 				cfg.pathRx = new RegExp('^(' +
-					cfg.pathList.sort(function (a, b) { return pathMap[a].specificity < pathMap[b].specificity; } )
+					cfg.pathList.sort(function (a, b) { return pathMap[b].specificity - pathMap[a].specificity; } )
 						.join('|')
 						.replace(/\/|\./g, '\\$&') +
 					')(?=\\/|$)'
@@ -478,18 +601,36 @@
 				delete cfg.pathList;
 			}
 
-			// fix all new paths and packages
-			fixAndPushPaths(cfg['paths'], false);
+			// fix all new packages, then paths (in case there are
+			// plugin-specific paths for a main module, such as wire!)
 			fixAndPushPaths(cfg['packages'], true);
+			fixAndPushPaths(cfg['paths'], false);
+
+			// process plugins after packages in case we already perform an
+			// id transform on a plugin (i.e. it's a package.main)
+			for (p in pluginCfgs) {
+				var absId = core.toAbsId(p + '!', '', newCfg);
+				newCfg.plugins[absId.substr(0, absId.length - 1)] = pluginCfgs[p];
+			}
+			pluginCfgs = newCfg.plugins;
 
 			// create search regex for each path map
-			for (var p in pluginCfgs) {
+			for (p in pluginCfgs) {
+				// inherit full config
+				pluginCfgs[p] = beget(newCfg, pluginCfgs[p]);
 				var pathList = pluginCfgs[p].pathList;
 				if (pathList) {
 					pluginCfgs[p].pathList = pathList.concat(newCfg.pathList);
 					convertPathMatcher(pluginCfgs[p]);
 				}
 			}
+
+			// ugh, this is ugly, but necessary until we refactor this function
+			// copy previous pathMap items onto pathList
+			for (p in prevCfg.pathMap) {
+				if (!newCfg.pathMap.hasOwnProperty(p)) newCfg.pathList.push(p);
+			}
+
 			convertPathMatcher(newCfg);
 
 			return newCfg;
@@ -508,36 +649,18 @@
 
 		},
 
-		resolvePathInfo: function (absId, cfg, forPlugin) {
+		resolvePathInfo: function (absId, cfg) {
 			// searches through the configured path mappings and packages
-			var pathMap, pathInfo, ctxId, path, pkgCfg, found;
+			var pathMap, pathInfo, path, pkgCfg;
 
 			pathMap = cfg.pathMap;
 
-			if (forPlugin && cfg.pluginPath && absId.indexOf('/') < 0 && !(absId in pathMap)) {
-				// prepend plugin folder path, if it's missing and path isn't in pathMap
-				// Note: this munges the concepts of ids and paths for plugins,
-				// but is generally safe since it's only for non-namespaced
-				// plugins (plugins without path or package info).
-				ctxId = absId = joinPath(cfg.pluginPath, absId);
-			}
-			if (!absUrlRx.test(absId)) {
+			if (!isAbsUrl(absId)) {
 				path = absId.replace(cfg.pathRx, function (match) {
-
+					// TODO: remove fallbacks here since they should never need to happen
 					pathInfo = pathMap[match] || {};
-					found = true;
 					pkgCfg = pathInfo.config;
-
-					// if pathInfo.main and match == absId, this is a main module
-					if (pathInfo.main && match == absId) {
-						ctxId = pathInfo.main;
-						return pathInfo.mainPath;
-					}
-					// if pathInfo.path return pathInfo.path
-					else {
-						return pathInfo.path || '';
-					}
-
+					return pathInfo.path || '';
 				});
 			}
 			else {
@@ -545,7 +668,6 @@
 			}
 
 			return {
-				ctxId: ctxId || absId,
 				config: pkgCfg || userCfg,
 				url: core.resolveUrl(path, cfg)
 			};
@@ -553,13 +675,13 @@
 
 		resolveUrl: function (path, cfg) {
 			var baseUrl = cfg.baseUrl;
-			return baseUrl && !absUrlRx.test(path) ? joinPath(baseUrl, path) : path;
+			return baseUrl && !isAbsUrl(path) ? joinPath(baseUrl, path) : path;
 		},
 
-		checkToAddJsExt: function (url) {
+		checkToAddJsExt: function (url, cfg) {
 			// don't add extension if a ? is found in the url (query params)
 			// i'd like to move this feature to a moduleLoader
-			return url + (dontAddExtRx.test(url) ? '' : '.js');
+			return url + ((cfg || userCfg).dontAddFileExt.test(url) ? '' : '.js');
 		},
 
 		loadScript: function (def, success, failure) {
@@ -572,6 +694,9 @@
 			function process (ev) {
 				ev = ev || global.event;
 				// detect when it's done loading
+				// ev.type == 'load' is for all browsers except IE6-9
+				// IE6-9 need to use onreadystatechange and look for
+				// el.readyState in {loaded, complete} (yes, we need both)
 				if (ev.type == 'load' || readyStates[el.readyState]) {
 					delete activeScripts[def.id];
 					// release event listeners
@@ -604,8 +729,8 @@
 			// IE will load the script sync if it's in the cache, so
 			// indicate the current resource definition if this happens.
 			activeScripts[def.id] = el;
-			// use insertBefore to keep IE from throwing Operation Aborted (thx Bryan Forbes!)
-			head.insertBefore(el, head.firstChild);
+
+			head.insertBefore(el, insertBeforeEl);
 
 			// the js! plugin uses this
 			return el;
@@ -628,7 +753,7 @@
 				else if (!currQuote) {
 					ids.push(id);
 				}
-				return m; // uses least RAM/CPU
+				return ''; // uses least RAM/CPU
 			});
 			return ids;
 		},
@@ -739,7 +864,7 @@
 					// signal any waiters/parents that we can export
 					// early (see progress callback in getDep below).
 					// note: this may fire for `require` as well, if it
-					// is listed after `module` or `exports` in teh deps list,
+					// is listed after `module` or `exports` in the deps list,
 					// but that is okay since all waiters will only record
 					// it once.
 					if (parentDef.exports) {
@@ -846,60 +971,68 @@
 		},
 
 		fetchDep: function (depName, parentDef) {
-			var toAbsId, isPreload, parts, mainId, loaderId, pluginId,
+			var toAbsId, isPreload, cfg, parts, mainId, loaderId, pluginId,
 				resId, pathInfo, def, tempDef, resCfg;
 
 			toAbsId = parentDef.toAbsId;
 			isPreload = parentDef.isPreload;
+			cfg = parentDef.config || userCfg; // is this fallback necessary?
 
 			// check for plugin loaderId
-			parts = pluginParts(depName);
-			// resId is not normalized since the plugin may need to do it
+			// TODO: this runs pluginParts() twice. how to run it just once?
+			parts = pluginParts(toAbsId(depName));
 			resId = parts.resourceId;
-
 			// get id of first resource to load (which could be a plugin)
-			mainId = toAbsId(parts.pluginId || resId);
-			pathInfo = core.resolvePathInfo(mainId, userCfg, !!parts.pluginId);
+			mainId = parts.pluginId || resId;
+			pathInfo = core.resolvePathInfo(mainId, cfg);
 
 			// get custom module loader from package config if not a plugin
-			// TODO: figure out how to make module loaders work with plugins
 			if (parts.pluginId) {
 				loaderId = mainId;
 			}
 			else {
-				loaderId = pathInfo.config['moduleLoader'];
+				// TODO: move config.moduleLoader to config.transform
+				loaderId = pathInfo.config['moduleLoader'] || pathInfo.config.moduleLoader;
 				if (loaderId) {
-					// since we're not using toAbsId, transformers must be absolute
+					// TODO: allow transforms to have relative module ids?
+					// (we could do this by returning package location from
+					// resolvePathInfo. why not return all package info?)
 					resId = mainId;
 					mainId = loaderId;
-					pathInfo = core.resolvePathInfo(loaderId, userCfg);
+					pathInfo = core.resolvePathInfo(loaderId, cfg);
 				}
 			}
 
-			// find resource definition. ALWAYS check via (id in cache) b/c
-			// falsey values could be in there.
-			def = cache[mainId];
-			if (!(mainId in cache)) {
-				def = cache[mainId] = core.createResourceDef(pathInfo.config, mainId, isPreload, pathInfo.ctxId);
-				def.url = core.checkToAddJsExt(pathInfo.url);
+			if (mainId in cache) {
+				def = cache[mainId];
+			}
+			else if (pathInfo.url in urlCache) {
+				def = cache[mainId] = urlCache[pathInfo.url];
+			}
+			else {
+				def = core.createResourceDef(pathInfo.config, mainId, isPreload);
+				// TODO: can this go inside createResourceDef?
+				// TODO: can we pass pathInfo.url to createResourceDef instead?
+				def.url = core.checkToAddJsExt(pathInfo.url, pathInfo.config);
+				cache[mainId] = urlCache[pathInfo.url] = def;
 				core.fetchResDef(def);
 			}
 
 			// plugin or transformer
 			if (mainId == loaderId) {
 
-				// we need to use depName until plugin tells us normalized id.
-				// if the plugin changes the id, we need to consolidate
-				// def promises below.  Note: exports objects will be different
-				// between pre-normalized and post-normalized defs! does this matter?
+				// we need to use an anonymous promise until plugin tells
+				// us normalized id. then, we need to consolidate the promises
+				// below. Note: exports objects will be different between
+				// pre-normalized and post-normalized defs! does this matter?
 				// don't put this resource def in the cache because if the
 				// resId doesn't change, the check if this is a new
 				// normalizedDef (below) will think it's already being loaded.
-				tempDef = /*cache[depName] =*/ new Promise();
+				tempDef = new Promise();
 
 				// note: this means moduleLoaders can store config info in the
 				// plugins config, too.
-				resCfg = userCfg.plugins[loaderId] || userCfg;
+				resCfg = cfg.plugins[loaderId] || cfg;
 
 				// wait for plugin resource def
 				when(def, function(plugin) {
@@ -908,8 +1041,8 @@
 					dynamic = plugin['dynamic'];
 					// check if plugin supports the normalize method
 					if ('normalize' in plugin) {
-						// dojo/has may return falsey values (0, actually)
-						resId = plugin['normalize'](resId, toAbsId, resCfg) || '';
+						// note: dojo/has may return falsey values (0, actually)
+						resId = plugin['normalize'](resId, toAbsId, def.config) || '';
 					}
 					else {
 						resId = toAbsId(resId);
@@ -926,9 +1059,9 @@
 
 						// because we're using resId, plugins, such as wire!,
 						// can use paths relative to the resource
-						normalizedDef = core.createPluginDef(resCfg, fullId, isPreload, resId);
+						normalizedDef = core.createPluginDef(resCfg, fullId, resId, isPreload);
 
-						// don't cache non-determinate "dynamic" resources (or non-existent resources)
+						// don't cache non-determinate "dynamic" resources
 						if (!dynamic) {
 							cache[fullId] = normalizedDef;
 						}
@@ -941,7 +1074,7 @@
 							if (!dynamic) cache[fullId] = res;
 						};
 						loaded['resolve'] = loaded;
-						loaded['reject'] = normalizedDef.reject;
+						loaded['reject'] = loaded['error'] = normalizedDef.reject;
 
 						// load the resource!
 						plugin.load(resId, normalizedDef.require, loaded, resCfg);
@@ -962,7 +1095,7 @@
 		},
 
 		getCurrentDefName: function () {
-			// IE marks the currently executing thread as "interactive"
+			// IE6-9 mark the currently executing thread as "interactive"
 			// Note: Opera lies about which scripts are "interactive", so we
 			// just have to test for it. Opera provides a true browser test, not
 			// a UA sniff, thankfully.
@@ -970,7 +1103,7 @@
 			var def;
 			if (!isType(global.opera, 'Opera')) {
 				for (var d in activeScripts) {
-					if (readyStates[activeScripts[d].readyState] == interactive) {
+					if (activeScripts[d].readyState == 'interactive') {
 						def = d;
 						break;
 					}
@@ -991,48 +1124,69 @@
 		// extract config, if it's specified
 		if (isType(args[0], 'Object')) {
 			cfg = args.shift();
-			userCfg = core.config(cfg, userCfg);
-			core.checkPreloads(cfg);
+			_config(cfg);
 		}
 
-		// thanks to Joop Ringelberg for helping troubleshoot the API
-		function CurlApi (ids, callback, waitFor) {
-			var then, ctx;
-			ctx = core.createContext(userCfg, undef, [].concat(ids));
-			this['then'] = then = function (resolved, rejected) {
-				when(ctx,
-					// return the dependencies as arguments, not an array
-					function (deps) {
-						if (resolved) resolved.apply(undef, deps);
-					},
-					// just throw if the dev didn't specify an error handler
-					function (ex) {
-						if (rejected) rejected(ex); else throw ex;
-					}
-				);
-				return this;
-			};
-			this['next'] = function (ids, cb) {
-				// chain api
-				return new CurlApi(ids, cb, ctx);
-			};
-			if (callback) then(callback);
-			when(waitFor, function () { core.getDeps(ctx); });
-		}
-
-		return new CurlApi(args[0], args[1]);
+		return new CurlApi(args[0], args[1], args[2]);
 
 	}
 
+	function _config (cfg) {
+		if (cfg) {
+			core.setApi(cfg);
+			userCfg = core.config(cfg);
+			// check for preloads
+			core.checkPreloads(cfg);
+			// check for main module(s)
+			if ('main' in cfg) {
+				// start in next turn to wait for other modules in current file
+				setTimeout(function () {
+					var ctx;
+					ctx = core.createContext(userCfg, undef, [].concat(cfg['main']));
+					core.getDeps(ctx);
+				}, 0);
+			}
+		}
+	}
+
+	// thanks to Joop Ringelberg for helping troubleshoot the API
+	function CurlApi (ids, callback, errback, waitFor) {
+		var then, ctx;
+		ctx = core.createContext(userCfg, undef, [].concat(ids));
+		this['then'] = then = function (resolved, rejected) {
+			when(ctx,
+				// return the dependencies as arguments, not an array
+				function (deps) {
+					if (resolved) resolved.apply(undef, deps);
+				},
+				// just throw if the dev didn't specify an error handler
+				function (ex) {
+					if (rejected) rejected(ex); else throw ex;
+				}
+			);
+			return this;
+		};
+		this['next'] = function (ids, cb, eb) {
+			// chain api
+			return new CurlApi(ids, cb, eb, ctx);
+		};
+		this['config'] = _config;
+		if (callback || errback) then(callback, errback);
+		when(waitFor, function () { core.getDeps(ctx); });
+	}
+
 	_curl['version'] = version;
+	_curl['config'] = _config;
 
 	function _define (args) {
 
-		var id = args.id;
+		var id, def, pathInfo;
+
+		id = args.id;
 
 		if (id == undef) {
 			if (argsNet !== undef) {
-				argsNet = {ex: 'Multiple anonymous defines in url'};
+				argsNet = { ex: 'Multiple anonymous defines in url' };
 			}
 			else if (!(id = core.getCurrentDefName())/* intentional assignment */) {
 				// anonymous define(), defer processing until after script loads
@@ -1042,13 +1196,12 @@
 		if (id != undef) {
 			// named define(), it is in the cache if we are loading a dependency
 			// (could also be a secondary define() appearing in a built file, etc.)
-			var def = cache[id];
+			def = cache[id];
 			if (!(id in cache)) {
 				// id is an absolute id in this case, so we can get the config.
-				// there's no way to allow a named define to fetch dependencies
-				// in the preload phase since we can't cascade the parent def.
-				var cfg = core.resolvePathInfo(id, userCfg).config;
-				def = cache[id] = core.createResourceDef(cfg, id);
+				pathInfo = core.resolvePathInfo(id, userCfg);
+				def = core.createResourceDef(pathInfo.config, id);
+				cache[id] = def;
 			}
 			if (!isPromise(def)) throw new Error('duplicate define: ' + id);
 			// check if this resource has already been resolved
@@ -1058,16 +1211,40 @@
 
 	}
 
-	// look for pre-existing globals
-	if (typeof define == 'function') prevDefine = define;
-	if (typeof userCfg == 'function') {
-		prevCurl = userCfg;
-		userCfg = false;
+	function define () {
+		// wrap inner _define so it can be replaced without losing define.amd
+		var args = core.fixArgs(arguments);
+		_define(args);
 	}
 
-	// configure first time
-	userCfg = core.config(userCfg);
-	core.checkPreloads(userCfg);
+	// indicate our capabilities:
+	define['amd'] = { 'plugins': true, 'jQuery': true, 'curl': version };
+
+	// default configs
+	userCfg = {
+		baseUrl: '',
+		pluginPath: 'curl/plugin',
+		dontAddFileExt: dontAddExtRx,
+		paths: {},
+		packages: {},
+		plugins: {},
+		pathMap: {},
+		pathRx: /$^/
+	};
+
+	// handle pre-existing global
+	prevCurl = global[curlName];
+	prevDefine = global[defineName];
+	if (!prevCurl || isType(prevCurl, 'Function')) {
+		// set default api
+		core.setApi();
+	}
+	else {
+		// remove global curl object
+		global[curlName] = undef; // can't use delete in IE 6-8
+		// configure curl
+		_config(prevCurl);
+	}
 
 	// allow curl to be a dependency
 	cache[curlName] = _curl;
@@ -1080,10 +1257,10 @@
 	cache['curl/_privileged'] = {
 		'core': core,
 		'cache': cache,
-		'cfg': userCfg,
+		'config': function () { return userCfg; },
 		'_define': _define,
 		'_curl': _curl,
 		'Promise': Promise
 	};
 
-}(this.window || global));
+}(this.window || (typeof global != 'undefined' && global) || this));

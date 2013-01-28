@@ -29,13 +29,16 @@
  *
  */
 (function (global, doc, testGlobalVar) {
-define(/*=='js',==*/ ['curl/_privileged'], function (priv) {
+define(/*=='curl/plugin/js',==*/ ['curl/_privileged'], function (priv) {
 "use strict";
 	var cache = {},
 		queue = [],
 		supportsAsyncFalse = doc && doc.createElement('script').async == true,
+		Promise,
 		waitForOrderedScript,
 		undef;
+
+	Promise = priv['Promise'];
 
 	function nameWithExt (name, defaultExt) {
 		return name.lastIndexOf('.') <= name.lastIndexOf('/') ?
@@ -102,10 +105,10 @@ define(/*=='js',==*/ ['curl/_privileged'], function (priv) {
 					// go get it (from cache hopefully)
 					fetch.apply(null, next);
 				}
-				promise['resolve'](def.resolved || true);
+				promise.resolve(def.resolved || true);
 			},
 			function (ex) {
-				promise['reject'](ex);
+				promise.reject(ex);
 			}
 		);
 
@@ -113,39 +116,55 @@ define(/*=='js',==*/ ['curl/_privileged'], function (priv) {
 
 	return {
 
-		// the !options force us to cache ids in the plugin
+		// the !options force us to cache ids in the plugin and provide normalize
 		'dynamic': true,
+
+		'normalize': function (id, toAbsId, config) {
+			var end = id.indexOf('!');
+			return end >= 0 ? toAbsId(id.substr(0, end)) + id.substr(end) : toAbsId(id);
+		},
 
 		'load': function (name, require, callback, config) {
 
-			var order, exportsPos, exports, prefetch, def, promise;
+			var order, exportsPos, exports, prefetch, url, def, promise;
 
 			order = name.indexOf('!order') > 0; // can't be zero
 			exportsPos = name.indexOf('!exports=');
 			exports = exportsPos > 0 && name.substr(exportsPos + 9); // must be last option!
 			prefetch = 'prefetch' in config ? config['prefetch'] : true;
 			name = order || exportsPos > 0 ? name.substr(0, name.indexOf('!')) : name;
+			// add extension afterwards so js!-specific path mappings don't need extension, too
+			url = nameWithExt(require['toUrl'](name), 'js');
+
+			function reject (ex) {
+				(callback['error'] || function (ex) { throw ex; })(ex);
+			}
 
 			// if we've already fetched this resource, get it out of the cache
-			if (name in cache) {
-				callback(cache[name]);
+			if (url in cache) {
+				if (cache[url] instanceof Promise) {
+					cache[url].then(callback, reject);
+				}
+				else {
+					callback(cache[url]);
+				}
 			}
 			else {
-				cache[name] = undef;
 				def = {
 					name: name,
-					url: require['toUrl'](nameWithExt(name, 'js')),
+					url: url,
 					order: order,
 					exports: exports,
 					timeoutMsec: config['timeout']
 				};
-				promise = {
-					'resolve': function (o) {
-						cache[name] = o;
-						(callback['resolve'] || callback)(o);
+				cache[url] = promise = new Promise();
+				promise.then(
+					function (o) {
+						cache[url] = o;
+						callback(o);
 					},
-					'reject': callback['reject'] || function (ex) { throw ex; }
-				};
+					reject
+				);
 
 				// if this script has to wait for another
 				// or if we're loading, but not executing it
