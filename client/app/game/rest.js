@@ -17,9 +17,7 @@ define({
 			module: 'rest/interceptor/hateoas',
 			args: [
 				{ $ref: 'baseClient' },
-				{
-					target: ''
-				}
+				{ target: '' }
 			]
 		}
 	},
