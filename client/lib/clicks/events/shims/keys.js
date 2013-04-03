@@ -1,7 +1,32 @@
-define(['../dom3', '../../utils'], function (dom3, utils) {
+/*
+ * Copyright (c) 2012 VMware, Inc. All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
+
+define(function (require) {
 	"use strict";
 
-	var keyboardProps, keyboardCat, types, loaded, escaped;
+	var dom3, utils, keyboardProps, keyboardCat, types, loaded, escaped;
+
+	dom3 = require('../dom3');
+	utils = require('../../utils');
 
 	keyboardProps = dom3.properties.keyboard;
 	keyboardCat = dom3.categories.keyboard;
@@ -9,7 +34,6 @@ define(['../dom3', '../../utils'], function (dom3, utils) {
 	loaded = false;
 	// from Crockford's json.js https://github.com/douglascrockford/JSON-js/blob/master/json.js
 	escaped = /[\\\"\x00-\x1f\x7f-\x9f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;
-
 
 	function upgradeKeyEvent(safe, raw) {
 		if ('key' in safe || 'char' in safe) {

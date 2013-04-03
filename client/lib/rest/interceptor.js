@@ -1,23 +1,8 @@
 /*
- * Copyright (c) 2012 VMware, Inc. All Rights Reserved.
+ * Copyright 2012-2013 the original author or authors
+ * @license MIT, see LICENSE.txt for details
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
+ * @author Scott Andrews
  */
 
 (function (define) {
@@ -25,9 +10,11 @@
 
 	define(function (require) {
 
-		var defaultClient, when;
+		var defaultClient, beget, mixin, when;
 
-		defaultClient = require('../rest');
+		defaultClient = require('./rest');
+		beget = require('./util/beget');
+		mixin = require('./util/mixin');
 		when = require('when');
 
 		/**
@@ -42,33 +29,53 @@
 		 * shared; specialization can be created by further wrapping that client
 		 * with custom interceptors.
 		 *
-		 * @param {Client} [client] client to wrap
+		 * @param {Client} [target] client to wrap
 		 * @param {Object} [config] configuration for the interceptor, properties will be specific to the interceptor implementation
 		 * @returns {Client} A client wrapped with the interceptor
 		 *
 		 * @class Interceptor
 		 */
 
+		function defaultInitHandler(config) {
+			return config;
+		}
+
 		function defaultRequestHandler(request /*, config */) {
 			return request;
 		}
 
-		function defaultResponseHandler(response /*, config, interceptor */) {
+		function defaultResponseHandler(response /*, config, client */) {
 			return response;
 		}
 
-		function whenFirst(promisesOrValues) {
-			// TODO this concept is likely to be added to when in the near future
+		function race(promisesOrValues) {
 			var d = when.defer();
 			promisesOrValues.forEach(function (promiseOrValue) {
-				when.chain(promiseOrValue, d.resolver);
+				when(promiseOrValue, d.resolve, d.reject);
 			});
 			return d.promise;
 		}
 
 		/**
+		 * Alternate return type for the request handler that allows for more complex interactions.
+		 *
+		 * @param properties.request the traditional request return object
+		 * @param {Promise} [properties.abort] promise that resolves if/when the request is aborted
+		 * @param {Client} [properties.client] override the defined client chain with an alternate client
+		 * @param [properties.response] response for the request, short circuit the request
+		 */
+		function ComplexRequest(properties) {
+			if (!(this instanceof ComplexRequest)) {
+				// in case users forget the 'new' don't mix into the interceptor
+				return new ComplexRequest(properties);
+			}
+			mixin(this, properties);
+		}
+
+		/**
 		 * Create a new interceptor for the provided handlers.
 		 *
+		 * @param {Function} [handlers.init] one time intialization, must return the config object
 		 * @param {Function} [handlers.request] request handler
 		 * @param {Function} [handlers.response] response handler regardless of error state
 		 * @param {Function} [handlers.success] response handler when the request is not in error
@@ -77,12 +84,13 @@
 		 *
 		 * @returns {Interceptor}
 		 */
-		return function (handlers) {
+		function interceptor(handlers) {
 
-			var requestHandler, successResponseHandler, errorResponseHandler;
+			var initHandler, requestHandler, successResponseHandler, errorResponseHandler;
 
 			handlers = handlers || {};
 
+			initHandler            = handlers.init    || defaultInitHandler;
 			requestHandler         = handlers.request || defaultRequestHandler;
 			successResponseHandler = handlers.success || handlers.response || defaultResponseHandler;
 			errorResponseHandler   = handlers.error   || function () {
@@ -90,47 +98,77 @@
 				return when.reject((handlers.response || defaultResponseHandler).apply(this, arguments));
 			};
 
-			return function (client, config) {
-				var interceptor;
+			return function (target, config) {
+				var client;
 
-				if (typeof client === 'object') {
-					config = client;
+				if (typeof target === 'object') {
+					config = target;
 				}
-				if (typeof client !== 'function') {
-					client = handlers.client || defaultClient;
+				if (typeof target !== 'function') {
+					target = handlers.client || defaultClient;
 				}
-				config = config || {};
 
-				interceptor = function (request) {
+				config = initHandler(beget(config));
+
+				client = function (request) {
+					var context = {};
 					request = request || {};
-					return when(requestHandler(request, config)).then(function (request) {
-						var response, abort;
-						if (request instanceof Array) {
-							// unpack compound value
-							abort = request[1];
-							request = request[0];
+					request.originator = request.originator || client;
+					return when(
+						requestHandler.call(context, request, config),
+						function (request) {
+							var response, abort, next;
+							next = target;
+							if (request instanceof ComplexRequest) {
+								// unpack request
+								abort = request.abort;
+								next = request.client || next;
+								response = request.response;
+								// normalize request, must be last
+								request = request.request;
+							}
+							response = response || when(request, function (request) {
+								return when(
+									next(request),
+									function (response) {
+										return successResponseHandler.call(context, response, config, client);
+									},
+									function (response) {
+										return errorResponseHandler.call(context, response, config, client);
+									}
+								);
+							});
+							return abort ? race([response, abort]) : response;
+						},
+						function (error) {
+							return when.reject({ request: request, error: error });
 						}
-						response = when(request, function (request) {
-							return when(
-								client(request),
-								function (response) {
-									return successResponseHandler(response, config, interceptor);
-								},
-								function (response) {
-									return errorResponseHandler(response, config, interceptor);
-								}
-							);
-						});
-						return abort ? whenFirst([response, abort]) : response;
-					});
-				};
-				interceptor.skip = function () {
-					return client;
+					);
 				};
 
-				return interceptor;
+				/**
+				 * @returns {Client} the target client
+				 */
+				client.skip = function () {
+					return target;
+				};
+
+				/**
+				 * @param {Interceptor} interceptor the interceptor to wrap this client with
+				 * @param [config] configuration for the interceptor
+				 * @returns {Client} the newly wrapped client
+				 */
+				client.chain = function (interceptor, config) {
+					return interceptor(client, config);
+				};
+
+				return client;
 			};
-		};
+		}
+
+		interceptor.ComplexRequest = ComplexRequest;
+
+		return interceptor;
 
 	});
 

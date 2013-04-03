@@ -1,14 +1,38 @@
-/*global window:false */
+/*
+ * Copyright (c) 2012 VMware, Inc. All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
 
 (function (buster, define) {
 	"use strict";
 
-	var clicks, storage, doc, tests, assert, refute, undef;
+	var doc, assert, refute, supports, undef;
 
 	assert = buster.assert;
 	refute = buster.refute;
 
 	doc = window.document;
+
+	supports = {
+		syntheticEvents: ('dispatchEvent' in window) || ('fireEvent' in window)
+	};
 
 	function fireEvent(type, eventInterface, target, bubbles, cancelable) {
 		if (arguments.length <= 3) {
@@ -35,53 +59,47 @@
 		return e;
 	}
 
-	tests = {
-		setUp: function (done) {
-			if (clicks) { return done(); }
-			define('clicks/events/storage-test', ['clicks', 'clicks/events/storage'], function (c, s) {
-				clicks = c;
-				storage = s;
-				done();
-			});
-		},
-		tearDown: function () {
-			clicks.reset();
-		},
+	define('clicks/events/storage-test', function (require) {
 
-		'should fire synthetic storage events': function () {
-			var events;
+		var clicks, storage;
 
-			clicks.attach(storage.types);
-			fireEvent('storage', 'StorageEvent', window);
+		clicks = require('clicks');
+		storage = require('clicks/events/storage');
 
-			events = clicks();
-			assert.same(1, events.length);
-			assert.same('storage', events[0].type);
-		},
-		'//should fire trusted storage events': function () {
-			var events;
+		buster.testCase('clicks/events/storage', {
+			tearDown: function () {
+				clicks.reset();
+			},
 
-			clicks.attach(storage.types);
+			'should fire synthetic storage events': {
+				requiresSupportFor: {
+					syntheticEvents: supports.syntheticEvents
+				},
+				'': function () {
+					var events;
 
-			window.localStorage.setItem('foo', 'bar');
-			window.localStorage.setItem('foo', 'baz');
+					clicks.attach(storage.types);
+					fireEvent('storage', 'StorageEvent', window);
 
-			events = clicks();
-			assert.same(1, events.length);
-			assert.same('storage', events[0].type);
-		}
-	};
+					events = clicks();
+					assert.same(1, events.length);
+					assert.same('storage', events[0].type);
+				}
+			},
+			'//should fire trusted storage events': function () {
+				var events;
 
-	function defer(name) {
-		if (!(name in tests)) { return; }
-		tests['//' + name] = tests[name];
-		delete tests[name];
-	}
+				clicks.attach(storage.types);
 
-	if (!('dispatchEvent' in window) && !('fireEvent' in window)) {
-		defer('should fire synthetic storage events');
-	}
+				window.localStorage.setItem('foo', 'bar');
+				window.localStorage.setItem('foo', 'baz');
 
-	buster.testCase('clicks/events/storage', tests);
+				events = clicks();
+				assert.same(1, events.length);
+				assert.same('storage', events[0].type);
+			}
+		});
+
+	});
 
 }(this.buster, define));

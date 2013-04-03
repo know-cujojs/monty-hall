@@ -1,0 +1,11 @@
+---
+language: node_js
+node_js:
+- 0.8
+- 0.6
+script: npm run-script ci
+env:
+  global:
+  - BUSTER_TEST_OPT="--reporter specification"
+  - SELENIUM_USERNAME=cujojs-msgs
+  - secure: "iPNZcEVB/7EKHTNQd0npB0qQqUSDa3Bm8CBD4HF2XsnTL6TcdgK23yESlbkN\nKqRcGN+DLilCd4WoxVGY+pBgojXXrX3x0zmrRZ8Q4EpkB9F6mgmuLddhUfzW\n5d8w4EJk+cfJhNpp2XN5gpvagdtaUAg5KKXBLbh9W9B3sFKXat8="

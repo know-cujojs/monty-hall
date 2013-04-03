@@ -136,7 +136,7 @@ define(['./when'], function(when) {
 	 * @return {Deferred} a Deferred with debug logging
 	 */
 	function deferDebug(/* id */) {
-		var d, status, value, origResolve, origReject, origProgress, origThen, id;
+		var d, status, value, origResolve, origReject, origNotify, origThen, id;
 
 		// Delegate to create a Deferred;
 		d = when.defer();
@@ -163,13 +163,18 @@ define(['./when'], function(when) {
 			return toString('Resolver', id, status, value);
 		};
 
-		origProgress = d.resolver.progress;
-		d.progress = d.resolver.progress = function(update) {
+		origNotify = d.resolver.notify;
+		d.notify = d.resolver.notify = promiseNotify;
+
+		// deferred.progress and deferred.resolver.progress are DEPRECATED.
+		d.progress = deprecated('deferred.progress', 'deferred.notify', promiseNotify, d);
+		d.resolver.progress = deprecated('deferred.resolver.progress', 'deferred.resolver.notify', promiseNotify, d.resolver);
+		function promiseNotify(update) {
 			// Notify global debug handler, if set
 			callGlobalHandler('progress', d, update);
 
-			return origProgress(update);
-		};
+			return origNotify(update);
+		}
 
 		origResolve = d.resolver.resolve;
 		d.resolve = d.resolver.resolve = function(val) {
@@ -210,6 +215,10 @@ define(['./when'], function(when) {
 
 	whenDebug.defer = deferDebug;
 	whenDebug.isPromise = when.isPromise;
+	whenDebug.chain = deprecated(
+		'when.chain(p, resolver)',
+		'resolver.resolve(p) or resolver.resolve(p.yield(optionalValue))',
+		when.chain, when);
 
 	// For each method we haven't already replaced, replace it with
 	// one that sets up debug logging on the returned promise
@@ -343,9 +352,9 @@ define(['./when'], function(when) {
 });
 })(typeof define == 'function'
 	? define
-	: function (deps, factory) { typeof module != 'undefined'
+	: function (deps, factory) { typeof exports != 'undefined'
 		? (module.exports = factory(require('./when')))
-		: (this.when      = factory(this.when));
+		: (this.when = factory(this.when));
 	}
 	// Boilerplate for AMD, Node, and browser global
 );

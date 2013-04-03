@@ -11,31 +11,17 @@ define({
 		}
 	},
 
-	// A HATEOAS-aware rest implementation that wraps the baseClient below
-	gameClient: {
-		create: {
-			module: 'rest/interceptor/hateoas',
-			args: [
-				{ $ref: 'baseClient' },
-				{ target: '' }
-			]
-		}
-	},
-
-	// Create a base rest client that understands how to parse JSON entities
-	// out of the response body.  It also looks for Location headers after creating
-	// new resources using POST, and automatically GETs the newly created
+	// A HATEOAS-aware rest implementation that understands how to parse JSON
+	// entities out of the response body. It also looks for Location headers after
+	// creating new resources using POST, and automatically GETs the newly created
 	// resource.
-	baseClient: {
-		create: {
-			module: 'rest/interceptor/entity',
-			args: {
-				create: {
-					module: 'rest/interceptor/location',
-					args: { $ref: 'client!', mime: 'application/json', entity: false }
-				}
-			}
-		}
+	gameClient: {
+		rest: [
+			{ module: 'rest/interceptor/mime', config: { mime: 'application/json' } },
+			{ module: 'rest/interceptor/hateoas', config: { target: '' } },
+			{ module: 'rest/interceptor/location' },
+			{ module: 'rest/interceptor/entity' }
+		]
 	},
 
 	// Include the rest package's wire plugin, which provides the

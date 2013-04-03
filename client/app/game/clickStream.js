@@ -8,10 +8,9 @@
 		dom3 = require('clicks/events/dom3');
 		touch = require('clicks/events/touch');
 
-		// Load the integration library modules (Enterprise Integration Patterns in JS)
-		integration = require('integration');
-		require('integration/aggregators/batching');
-		require('integration/channels/pubsub');
+		// Load the msgs library modules (Message oriented programming)
+		integration = require('msgs');
+		require('msgs/aggregators/batching');
 
 		/**
 		 * Creates an object that will configure the clicks library to capture user
@@ -31,9 +30,9 @@
 					bus = integration.bus();
 
 					clicks.stream(bus.inboundAdapter('stream'));
-					bus.pubsub('stream');
+					bus.channel('stream');
 					bus.batchingAggregator('batcher', { batch: 500, timeout: 5e3, input: 'stream', output: 'chunkedStream' });
-					bus.pubsub('chunkedStream');
+					bus.channel('chunkedStream');
 					bus.subscribe('chunkedStream', bus.outboundAdapter(function (chunk) {
 						client({
 							method: 'post',

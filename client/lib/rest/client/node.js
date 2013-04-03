@@ -1,23 +1,9 @@
 /*
- * Copyright (c) 2012 VMware, Inc. All Rights Reserved.
+ * Copyright 2012-2013 the original author or authors
+ * @license MIT, see LICENSE.txt for details
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
+ * @author Jeremy Grelle
+ * @author Scott Andrews
  */
 
 (function (define) {
@@ -35,6 +21,38 @@
 		normalizeHeaderName = require('../util/normalizeHeaderName');
 
 		httpsExp = /^https/i;
+
+		// TODO remove once Node 0.6 is no longer supported
+		Buffer.concat = Buffer.concat || function (list, length) {
+			/*jshint plusplus:false, shadow:true */
+			// from https://github.com/joyent/node/blob/v0.8.21/lib/buffer.js
+			if (!Array.isArray(list)) {
+				throw new Error('Usage: Buffer.concat(list, [length])');
+			}
+
+			if (list.length === 0) {
+				return new Buffer(0);
+			} else if (list.length === 1) {
+				return list[0];
+			}
+
+			if (typeof length !== 'number') {
+				length = 0;
+				for (var i = 0; i < list.length; i++) {
+					var buf = list[i];
+					length += buf.length;
+				}
+			}
+
+			var buffer = new Buffer(length);
+			var pos = 0;
+			for (var i = 0; i < list.length; i++) {
+				var buf = list[i];
+				buf.copy(buffer, pos);
+				pos += buf.length;
+			}
+			return buffer;
+		};
 
 		function node(request) {
 
@@ -72,6 +90,9 @@
 			};
 
 			clientRequest = client.request(options, function (clientResponse) {
+				// Array of Buffers to collect response chunks
+				var buffers = [];
+
 				response.raw = {
 					request: clientRequest,
 					response: clientResponse
@@ -86,17 +107,19 @@
 				});
 
 				clientResponse.on('data', function (data) {
-					if (!('entity' in response)) {
-						response.entity = '';
-					}
-					// normalize Buffer to a string
-					response.entity += data.toString();
+					// Collect the next Buffer chunk
+					buffers.push(data);
 				});
+
 				clientResponse.on('end', function () {
+					// Create the final response entity
+					response.entity = buffers.length > 0 ? Buffer.concat(buffers).toString() : '';
+					buffers = null;
+
 					d.resolve(response);
 				});
 			});
-				
+
 			clientRequest.on('error', function (e) {
 				response.error = e;
 				d.reject(response);
@@ -109,6 +132,10 @@
 
 			return d.promise;
 		}
+
+		node.chain = function (interceptor, config) {
+			return interceptor(node, config);
+		};
 
 		return node;
 

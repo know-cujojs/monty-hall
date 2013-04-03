@@ -1,23 +1,8 @@
 /*
- * Copyright (c) 2012 VMware, Inc. All Rights Reserved.
+ * Copyright 2012-2013 the original author or authors
+ * @license MIT, see LICENSE.txt for details
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
+ * @author Scott Andrews
  */
 
 (function (define) {
@@ -28,35 +13,26 @@
 
 		var empty = {};
 
-		function _mixin(dest, source, copyFunc) {
-			var name;
-
-			for (name in source) {
-				// the (!(name in empty) || empty[name] !== source[name]) condition avoids
-				// copying properties in "source" inherited from Object.prototype. For
-				// example, if dest has a custom toString() method, don't overwrite it with
-				// the toString() method that source inherited from Object.prototype
-				if (!(name in dest) || (dest[name] !== source[name] && (!(name in empty) || empty[name] !== source[name]))) {
-					dest[name] = copyFunc ? copyFunc(source[name]) : source[name];
-				}
-			}
-
-			return dest; // Object
-		}
-
 		/**
-		 * Mix the properties from the source object into the destination object
+		 * Mix the properties from the source object into the destination object.
+		 * When the same property occurs in more then one object, the right most
+		 * value wins.
 		 *
 		 * @param {Object} dest the object to copy properties to
 		 * @param {Object} sources the objects to copy properties from.  May be 1 to N arguments, but not an Array.
 		 * @return {Object} the destination object
 		 */
 		function mixin(dest /*, sources... */) {
-			var i, l;
+			var i, l, source, name;
 
 			if (!dest) { dest = {}; }
 			for (i = 1, l = arguments.length; i < l; i += 1) {
-				_mixin(dest, arguments[i]);
+				source = arguments[i];
+				for (name in source) {
+					if (!(name in dest) || (dest[name] !== source[name] && (!(name in empty) || empty[name] !== source[name]))) {
+						dest[name] = source[name];
+					}
+				}
 			}
 
 			return dest; // Object

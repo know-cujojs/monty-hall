@@ -1,31 +1,32 @@
 {
 	"name": "clicks",
-	"version": "0.0.1",
-	"description": "",
-	"keywords": ["click", "steam", "clickstream"],
+	"version": "0.1.1",
+	"description": "Browser click streams",
+	"keywords": ["click", "steam", "clickstream", "s2js", "spring", "springsource"],
 	"licenses": [
 		{
 			"type": "MIT",
-			"url": "http://www.opensource.org/licenses/mit-license.php"
+			"url": "http://opensource.org/licenses/MIT"
 		}
 	],
 	"repositories": [
 		{
 			"type": "git",
-			"url": "https://github.com/five-eleven/clicks"
+			"url": "https://github.com/s2js/clicks"
 		}
 	],
-	"bugs": "https://github.com/five-eleven/clicks/issues",
+	"bugs": "https://github.com/s2js/clicks/issues",
 	"maintainers": [
 		{
 			"name": "Scott Andrews",
+			"email": "andrewss@vmware.com",
 			"web": "http://twitter.com/scothis"
 		}
 	],
-	"dependencies": {
-	},
+	"dependencies": {},
 	"devDependencies": {
-		"curl": "https://github.com/scothis/curl/tarball/npm-version",
+		"curl": "https://github.com/cujojs/curl/tarball/0.7.2",
+		"poly": "https://github.com/cujojs/poly/tarball/0.5.1",
 		"buster": "",
 		"grunt": "",
 		"grunt-buster": "",

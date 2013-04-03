@@ -1,23 +1,8 @@
 /*
- * Copyright (c) 2012 VMware, Inc. All Rights Reserved.
+ * Copyright 2012-2013 the original author or authors
+ * @license MIT, see LICENSE.txt for details
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
+ * @author Scott Andrews
  */
 
 (function (define, global) {
@@ -25,12 +10,12 @@
 
 	define(function (require) {
 
-		var defaultClient, when, UrlBuilder, pubsub;
+		var interceptor, UrlBuilder, pubsub, when;
 
-		defaultClient = require('../../rest');
-		when = require('when');
+		interceptor = require('../interceptor');
 		UrlBuilder = require('../UrlBuilder');
 		pubsub = require('../util/pubsub');
+		when = require('when');
 
 		function defaultOAuthCallback(hash) {
 			var params, queryString, regex, m;
@@ -56,6 +41,29 @@
 			};
 		}
 
+		function authorize(config) {
+			var d, state, url, dismissWindow;
+
+			d = when.defer();
+			state = Math.random() * new Date().getTime();
+			url = new UrlBuilder(config.authorizationUrlBase).build({
+				'response_type': 'token',
+				'redirect_uri': config.redirectUrl,
+				'client_id': config.clientId,
+				'scope': config.scope,
+				'state': state
+			});
+
+			dismissWindow = config.windowStrategy(url);
+
+			pubsub.subscribe(state, function (authorization) {
+				dismissWindow();
+				d.resolve(authorization);
+			});
+
+			return d.promise;
+		}
+
 		/**
 		 * OAuth implicit flow support
 		 *
@@ -76,7 +84,7 @@
 		 * URL fragment and pass it to the callback function on the 'opener', or
 		 * 'parent' window.
 		 *
-		 * @param {Client} [client] client to wrap
+		 * @param {Client} [target] client to wrap
 		 * @param {string} [config.token] pre-configured authentication token
 		 * @param {string} config.clientId OAuth clientId
 		 * @param {string} config.scope OAuth scope
@@ -88,101 +96,46 @@
 		 *
 		 * @returns {Client}
 		 */
-		return function (client, config) {
-			if (typeof client === 'object') {
-				config = client;
-			}
-			if (typeof client !== 'function') {
-				client = defaultClient;
-			}
+		return interceptor({
+			init: function (config) {
+				config.redirectUrl = new UrlBuilder(config.redirectUrl).fullyQualify().build();
+				config.windowStrategy = config.windowStrategy || defaultWindowStrategy;
+				config.oAuthCallback = config.oAuthCallback || defaultOAuthCallback;
+				config.oAuthCallbackName = config.oAuthCallbackName || 'oAuthCallback';
 
-			var interceptor, authorization, clientId, authorizationUrlBase, redirectUrl, scope, windowStrategy;
+				global[config.oAuthCallbackName] = config.oAuthCallback;
 
-			authorization = config.token;
-			clientId = config.clientId;
-			authorizationUrlBase = config.authorizationUrlBase;
-			redirectUrl = new UrlBuilder(config.redirectUrl).absolute().build();
-			scope = config.scope;
-			windowStrategy = config.windowStrategy || defaultWindowStrategy;
+				return config;
+			},
+			request: function (request, config) {
+				request.headers = request.headers || {};
 
-			global[config.oAuthCallbackName || 'oAuthCallback'] = config.oAuthCallback || defaultOAuthCallback;
-
-			function reauthorize() {
-				var d, state, url, dismissWindow;
-
-				d = when.defer();
-				state = Math.random() * new Date().getTime();
-				url = new UrlBuilder(authorizationUrlBase).build({
-					'response_type': 'token',
-					'redirect_uri': redirectUrl,
-					'client_id': clientId,
-					'scope': scope,
-					'state': state
-				});
-
-				dismissWindow = windowStrategy(url);
-
-				pubsub.subscribe(state, function (auth) {
-					authorization = auth;
-					dismissWindow();
-					d.resolve(authorization);
-				});
-
-				return d.promise;
-			}
-
-			interceptor = function (request) {
-				var response;
-
-				response = when.defer();
-
-				function doRequest() {
-					var headers;
-
-					headers = request.headers || (request.headers = {});
-					headers.Authorization = authorization;
-
-					when(
-						client(request),
-						function (success) {
-							if (success.status.code === 401) {
-								when(reauthorize(), function () {
-									doRequest(request);
-								});
-							}
-							else if (success.status.code === 403) {
-								response.reject(success);
-							}
-							else {
-								response.resolve(success);
-							}
-						},
-						function (error) {
-							response.reject(error);
-						},
-						function (progress) {
-							response.progress(progress);
-						}
-					);
-				}
-
-				if (!authorization) {
-					when(reauthorize(), function () {
-						doRequest();
-					});
+				if (config.token) {
+					request.headers.Authorization = config.token;
+					return request;
 				}
 				else {
-					doRequest();
+					return authorize(config).then(function (authorization) {
+						request.headers.Authorization = config.token = authorization;
+						return request;
+					});
+				}
+			},
+			response: function (response, config, client) {
+				if (response.status.code === 401) {
+					// token probably expired, reauthorize
+					return authorize(config).then(function (authorization) {
+						config.token = authorization;
+						return client(response.request);
+					});
+				}
+				else if (response.status.code === 403) {
+					return when.reject(response);
 				}
 
-				return response.promise;
-			};
-			interceptor.skip = function () {
-				return client;
-			};
-
-			return interceptor;
-		};
+				return response;
+			}
+		});
 
 	});
 

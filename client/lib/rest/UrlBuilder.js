@@ -1,37 +1,24 @@
 /*
- * Copyright (c) 2012 VMware, Inc. All Rights Reserved.
+ * Copyright 2012-2013 the original author or authors
+ * @license MIT, see LICENSE.txt for details
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
+ * @author Scott Andrews
  */
 
-(function (define, document) {
+(function (define, location) {
 	'use strict';
+
+	var undef;
 
 	define(function (require) {
 
-		var beget, absoluteUrlRE, urlEncodedBraceOpenRE, urlEncodedBraceCloseRE;
+		var beget, origin, urlRE, absoluteUrlRE, fullyQualifiedUrlRE;
 
 		beget = require('./util/beget');
 
-		absoluteUrlRE = /^https?:\/\//i;
-		urlEncodedBraceOpenRE = /%7b/i;
-		urlEncodedBraceCloseRE = /%7d/i;
+		urlRE = /([a-z][a-z0-9\+\-\.]*:)\/\/([^@]+@)?(([^:\/]+)(:([0-9]+))?)(\/[^?#]*)?(\?[^#]*)?(#\S*)?/i;
+		absoluteUrlRE = /^([a-z][a-z0-9\-\+\.]*:\/\/|\/)/i;
+		fullyQualifiedUrlRE = /([a-z][a-z0-9\+\-\.]*:)\/\/([^@]+@)?(([^:\/]+)(:([0-9]+))?)\//i;
 
 		/**
 		 * Apply params to the template to create a URL.
@@ -73,6 +60,10 @@
 			return url;
 		}
 
+		function startsWith(str, test) {
+			return str.indexOf(test) === 0;
+		}
+
 		/**
 		 * Create a new URL Builder
 		 *
@@ -81,6 +72,11 @@
 		 * @constructor
 		 */
 		function UrlBuilder(template, params) {
+			if (!(this instanceof UrlBuilder)) {
+				// invoke as a constructor
+				return new UrlBuilder(template, params);
+			}
+
 			if (template instanceof UrlBuilder) {
 				this._template = template.template;
 				this._params = beget(this._params, params);
@@ -116,16 +112,89 @@
 			 *
 			 * @return {UrlBuilder} the fully qualified URL template
 			 */
-			absolute: function () {
-				if (!document || absoluteUrlRE.test(this._template)) { return this; }
+			fullyQualify: function () {
+				if (!location) { return this; }
+				if (this.isFullyQualified()) { return this; }
 
-				var a, template;
+				var template = this._template;
 
-				a = document.createElement('a');
-				a.href = this._template;
-				template = a.href.replace(urlEncodedBraceOpenRE, '{').replace(urlEncodedBraceCloseRE, '}');
+				if (startsWith(template, '//')) {
+					template = origin.protocol + template;
+				}
+				else if (startsWith(template, '/')) {
+					template = origin.origin + template;
+				}
+				else if (!this.isAbsolute()) {
+					template = origin.origin + origin.pathname.substring(0, origin.pathname.lastIndexOf('/') + 1);
+				}
+
+				if (template.indexOf('/', 8) === -1) {
+					// default the pathname to '/'
+					template = template + '/';
+				}
 
 				return new UrlBuilder(template, this._params);
+			},
+
+			/**
+			 * True if the URL is absolute
+			 *
+			 * @return {boolean}
+			 */
+			isAbsolute: function () {
+				return absoluteUrlRE.test(this.build());
+			},
+
+			/**
+			 * True if the URL is fully qualified
+			 *
+			 * @return {boolean}
+			 */
+			isFullyQualified: function () {
+				return fullyQualifiedUrlRE.test(this.build());
+			},
+
+			/**
+			 * True if the URL is cross origin. The protocol, host and port must not be
+			 * the same in order to be cross origin,
+			 *
+			 * @return {boolean}
+			 */
+			isCrossOrigin: function () {
+				if (!origin) {
+					return true;
+				}
+				var url = this.parts();
+				return url.protocol !== origin.protocol ||
+				       url.hostname !== origin.hostname ||
+				       url.port !== origin.port;
+			},
+
+			/**
+			 * Split a URL into its consituent parts following the naming convention of
+			 * 'window.location'. One difference is that the port will contain the
+			 * protocol default if not specified.
+			 *
+			 * @see https://developer.mozilla.org/en-US/docs/DOM/window.location
+			 *
+			 * @returns {Object} a 'window.location'-like object
+			 */
+			parts: function () {
+				var url, parts;
+				url = this.fullyQualify().build().match(urlRE);
+				parts = {
+					href: url[0],
+					protocol: url[1],
+					host: url[3],
+					hostname: url[4],
+					port: url[6],
+					pathname: url[7] || '',
+					search: url[8] || '',
+					hash: url[9] || ''
+				};
+				parts.origin = parts.protocol + '//' + parts.host;
+				parts.port = parts.port || (parts.protocol === 'https:' ? '443' : parts.protocol === 'http:' ? '80' : '');
+				return parts;
 			},
 
 			/**
@@ -147,11 +216,13 @@
 
 		};
 
+		origin = location ? new UrlBuilder(location.href).parts() : undef;
+
 		return UrlBuilder;
 	});
 
 }(
 	typeof define === 'function' && define.amd ? define : function (factory) { module.exports = factory(require); },
-	this.document
+	this.location
 	// Boilerplate for AMD and Node
 ));

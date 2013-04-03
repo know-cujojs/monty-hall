@@ -1,4 +1,4 @@
-/** @license MIT License (c) copyright B Cavalier & J Hann */
+/** @license MIT License (c) copyright 2011-2013 original author or authors */
 
 /**
  * A lightweight CommonJS Promises/A and when() implementation
@@ -7,7 +7,10 @@
  * Licensed under the MIT License at:
  * http://www.opensource.org/licenses/mit-license.php
  *
- * @version 1.7.1
+ * @author Brian Cavalier
+ * @author John Hann
+ *
+ * @version 1.8.1
  */
 
 (function(define) { 'use strict';
@@ -62,43 +65,55 @@ define(function () {
 	 * whose value is promiseOrValue if promiseOrValue is an immediate value.
 	 *
 	 * @param {*} promiseOrValue
-	 * @returns Guaranteed to return a trusted Promise.  If promiseOrValue is a when.js {@link Promise}
-	 *   returns promiseOrValue, otherwise, returns a new, already-resolved, when.js {@link Promise}
-	 *   whose resolution value is:
+	 * @returns {Promise} Guaranteed to return a trusted Promise.  If promiseOrValue
+	 *   is trusted, returns promiseOrValue, otherwise, returns a new, already-resolved
+	 *   when.js promise whose resolution value is:
 	 *   * the resolution value of promiseOrValue if it's a foreign promise, or
 	 *   * promiseOrValue if it's a value
 	 */
 	function resolve(promiseOrValue) {
-		var promise, deferred;
+		var promise;
 
 		if(promiseOrValue instanceof Promise) {
 			// It's a when.js promise, so we trust it
 			promise = promiseOrValue;
 
+		} else if(isPromise(promiseOrValue)) {
+			// Assimilate foreign promises
+			promise = assimilate(promiseOrValue);
 		} else {
-			// It's not a when.js promise. See if it's a foreign promise or a value.
-			if(isPromise(promiseOrValue)) {
-				// It's a thenable, but we don't know where it came from, so don't trust
-				// its implementation entirely.  Introduce a trusted middleman when.js promise
-				deferred = defer();
-
-				// IMPORTANT: This is the only place when.js should ever call .then() on an
-				// untrusted promise. Don't expose the return value to the untrusted promise
-				promiseOrValue.then(
-					function(value)  { deferred.resolve(value); },
-					function(reason) { deferred.reject(reason); },
-					function(update) { deferred.progress(update); }
-				);
-
-				promise = deferred.promise;
-
-			} else {
-				// It's a value, not a promise.  Create a resolved promise for it.
-				promise = fulfilled(promiseOrValue);
-			}
+			// It's a value, create a fulfilled promise for it.
+			promise = fulfilled(promiseOrValue);
 		}
 
 		return promise;
+	}
+
+	/**
+	 * Assimilate an untrusted thenable by introducing a trusted middle man.
+	 * Not a perfect strategy, but possibly the best we can do.
+	 * IMPORTANT: This is the only place when.js should ever call an untrusted
+	 * thenable's then() on an. Don't expose the return value to the untrusted thenable
+	 *
+	 * @param {*} thenable
+	 * @param {function} thenable.then
+	 * @returns {Promise}
+	 */
+	function assimilate(thenable) {
+		var d = defer();
+
+		// TODO: Enqueue this for future execution in 2.0
+		try {
+			thenable.then(
+				function(value)  { d.resolve(value); },
+				function(reason) { d.reject(reason); },
+				function(update) { d.progress(update); }
+			);
+		} catch(e) {
+			d.reject(e);
+		}
+
+		return d.promise;
 	}
 
 	/**
@@ -156,7 +171,7 @@ define(function () {
 		 *  - if value is a promise, will fulfill with its value, or reject
 		 *    with its reason.
 		 */
-		yield: function(value) {
+		'yield': function(value) {
 			return this.then(function() {
 				return value;
 			});
@@ -165,7 +180,7 @@ define(function () {
 		/**
 		 * Assumes that this promise will fulfill with an array, and arranges
 		 * for the onFulfilled to be called with the array as its argument list
-		 * i.e. onFulfilled.spread(undefined, array).
+		 * i.e. onFulfilled.apply(undefined, array).
 		 * @param {function} onFulfilled function to receive spread arguments
 		 * @return {Promise}
 		 */
@@ -188,9 +203,8 @@ define(function () {
 	 */
 	function fulfilled(value) {
 		var p = new Promise(function(onFulfilled) {
-			// TODO: Promises/A+ check typeof onFulfilled
 			try {
-				return resolve(onFulfilled ? onFulfilled(value) : value);
+				return resolve(typeof onFulfilled == 'function' ? onFulfilled(value) : value);
 			} catch(e) {
 				return rejected(e);
 			}
@@ -209,9 +223,8 @@ define(function () {
 	 */
 	function rejected(reason) {
 		var p = new Promise(function(_, onRejected) {
-			// TODO: Promises/A+ check typeof onRejected
 			try {
-				return onRejected ? resolve(onRejected(reason)) : rejected(reason);
+				return resolve(typeof onRejected == 'function' ? onRejected(reason) : rejected(reason));
 			} catch(e) {
 				return rejected(e);
 			}
@@ -231,7 +244,7 @@ define(function () {
 	 */
 	function defer() {
 		var deferred, promise, handlers, progressHandlers,
-			_then, _progress, _resolve;
+			_then, _notify, _resolve;
 
 		/**
 		 * The promise for the new deferred
@@ -248,15 +261,16 @@ define(function () {
 			then:     then, // DEPRECATED: use deferred.promise.then
 			resolve:  promiseResolve,
 			reject:   promiseReject,
-			// TODO: Consider renaming progress() to notify()
-			progress: promiseProgress,
+			progress: promiseNotify, // DEPRECATED: use deferred.notify
+			notify:   promiseNotify,
 
 			promise:  promise,
 
 			resolver: {
 				resolve:  promiseResolve,
 				reject:   promiseReject,
-				progress: promiseProgress
+				progress: promiseNotify, // DEPRECATED: use deferred.notify
+				notify:   promiseNotify
 			}
 		};
 
@@ -273,7 +287,6 @@ define(function () {
 		 * @param {function?} [onProgress] progress handler
 		 */
 		_then = function(onFulfilled, onRejected, onProgress) {
-			// TODO: Promises/A+ check typeof onFulfilled, onRejected, onProgress
 			var deferred, progressHandler;
 
 			deferred = defer();
@@ -282,13 +295,13 @@ define(function () {
 				? function(update) {
 					try {
 						// Allow progress handler to transform progress event
-						deferred.progress(onProgress(update));
+						deferred.notify(onProgress(update));
 					} catch(e) {
 						// Use caught value as progress
-						deferred.progress(e);
+						deferred.notify(e);
 					}
 				}
-				: function(update) { deferred.progress(update); };
+				: function(update) { deferred.notify(update); };
 
 			handlers.push(function(promise) {
 				promise.then(onFulfilled, onRejected)
@@ -305,7 +318,7 @@ define(function () {
 		 * @private
 		 * @param {*} update progress event payload to pass to all listeners
 		 */
-		_progress = function(update) {
+		_notify = function(update) {
 			processQueue(progressHandlers, update);
 			return update;
 		};
@@ -317,14 +330,12 @@ define(function () {
 		 * @param {*} value the value of this deferred
 		 */
 		_resolve = function(value) {
-			value = resolve(value);
-
 			// Replace _then with one that directly notifies with the result.
 			_then = value.then;
 			// Replace _resolve so that this Deferred can only be resolved once
 			_resolve = resolve;
 			// Make _progress a noop, to disallow progress for the resolved promise.
-			_progress = noop;
+			_notify = identity;
 
 			// Notify handlers
 			processQueue(handlers, value);
@@ -353,7 +364,7 @@ define(function () {
 		 * Wrapper to allow _resolve to be replaced
 		 */
 		function promiseResolve(val) {
-			return _resolve(val);
+			return _resolve(resolve(val));
 		}
 
 		/**
@@ -364,10 +375,10 @@ define(function () {
 		}
 
 		/**
-		 * Wrapper to allow _progress to be replaced
+		 * Wrapper to allow _notify to be replaced
 		 */
-		function promiseProgress(update) {
-			return _progress(update);
+		function promiseNotify(update) {
+			return _notify(update);
 		}
 	}
 
@@ -405,7 +416,7 @@ define(function () {
 
 		return when(promisesOrValues, function(promisesOrValues) {
 
-			var toResolve, toReject, values, reasons, deferred, fulfillOne, rejectOne, progress, len, i;
+			var toResolve, toReject, values, reasons, deferred, fulfillOne, rejectOne, notify, len, i;
 
 			len = promisesOrValues.length >>> 0;
 
@@ -422,7 +433,7 @@ define(function () {
 				deferred.resolve(values);
 
 			} else {
-				progress = deferred.progress;
+				notify = deferred.notify;
 
 				rejectOne = function(reason) {
 					reasons.push(reason);
@@ -446,12 +457,12 @@ define(function () {
 
 				for(i = 0; i < len; ++i) {
 					if(i in promisesOrValues) {
-						when(promisesOrValues[i], fulfiller, rejecter, progress);
+						when(promisesOrValues[i], fulfiller, rejecter, notify);
 					}
 				}
 			}
 
-			return deferred.then(onFulfilled, onRejected, onProgress);
+			return deferred.promise.then(onFulfilled, onRejected, onProgress);
 
 			function rejecter(reason) {
 				rejectOne(reason);
@@ -624,7 +635,10 @@ define(function () {
 				resolver.reject(reason);
 				return rejected(reason);
 			},
-			resolver.progress
+			function(update) {
+				typeof resolver.notify === 'function' && resolver.notify(update);
+				return update;
+			}
 		);
 	}
 

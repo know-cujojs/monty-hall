@@ -1,23 +1,8 @@
 /*
- * Copyright (c) 2012 VMware, Inc. All Rights Reserved.
+ * Copyright 2012-2013 the original author or authors
+ * @license MIT, see LICENSE.txt for details
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
+ * @author Scott Andrews
  */
 
 (function (define) {
@@ -25,41 +10,69 @@
 
 	define(function (require) {
 
-		var when, load, registry;
+		var when, registry;
 
 		when = require('when');
 
-		// include text/plain and application/json by default
-		registry = {
-			'text/plain': require('./type/text/plain'),
-			'application/json': require('./type/application/json')
-		};
+		function normalizeMime(mime) {
+			return mime.split(';')[0].trim();
+		}
 
-		/**
-		 * Lookup the converter for a MIME type
-		 *
-		 * @param {string} mime the MIME type
-		 * @return the converter for the MIME type
-		 */
-		function lookup(mime) {
-			// ignore charset if included
-			mime = mime.split(';')[0].trim();
-			if (!registry[mime]) {
-				return register(mime, load(mime));
+		function Registry(parent) {
+			var mimes = {};
+
+			if (typeof parent === 'function') {
+				// coerce a lookup function into the registry API
+				parent = (function (lookup) {
+					return {
+						lookup: function (mime) {
+							// cache to avoid duplicate lookups
+							mimes[mime] = lookup(mime);
+							return mimes[mime];
+						}
+					};
+				}(parent));
 			}
-			return registry[mime];
+
+			/**
+			 * Lookup the converter for a MIME type
+			 *
+			 * @param {string} mime the MIME type
+			 * @return a promise for the converter
+			 */
+			this.lookup = function lookup(mime) {
+				mime = normalizeMime(mime);
+				return mime in mimes ? mimes[mime] : parent.lookup(mime);
+			};
+
+			/**
+			 * Register a custom converter for a MIME type
+			 *
+			 * @param {string} mime the MIME type
+			 * @param converter the converter for the MIME type
+			 * @return a promise for the converter
+			 */
+			this.register = function register(mime, converter) {
+				mime = normalizeMime(mime);
+				mimes[mime] = when.resolve(converter);
+				return mimes[mime];
+			};
+
 		}
 
-		/**
-		 * Register a custom converter for a MIME type
-		 *
-		 * @param {string} mime the MIME type
-		 * @param converter the converter for the MIME type
-		 * @return the converter
-		 */
-		function register(mime, converter) {
-			return registry[mime] = converter;
-		}
+		Registry.prototype = {
+
+			/**
+			 * Create a child registry whoes registered converters remain local, while
+			 * able to lookup converters from its parent.
+			 *
+			 * @returns child MIME registry
+			 */
+			child: function child() {
+				return new Registry(this);
+			}
+
+		};
 
 		function loadAMD(mime) {
 			var d, timeout;
@@ -95,18 +108,13 @@
 			return d.promise;
 		}
 
-		/**
-		 * Attempts to resolve a new converter
-		 *
-		 * @param {string} mime the MIME type
-		 * @return the converter for the MIME type
-		 */
-		load = typeof require === 'function' && require.amd ? loadAMD : loadNode;
+		registry = new Registry(typeof require === 'function' && require.amd ? loadAMD : loadNode);
 
-		return {
-			lookup: lookup,
-			register: register
-		};
+		// include text/plain and application/json by default
+		registry.register('text/plain', require('./type/text/plain'));
+		registry.register('application/json', require('./type/application/json'));
+
+		return registry;
 
 	});
 

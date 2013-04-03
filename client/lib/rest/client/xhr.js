@@ -1,26 +1,11 @@
 /*
- * Copyright (c) 2012 VMware, Inc. All Rights Reserved.
+ * Copyright 2012-2013 the original author or authors
+ * @license MIT, see LICENSE.txt for details
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
+ * @author Scott Andrews
  */
 
-(function (define, XMLHttpRequest) {
+(function (define, global) {
 	'use strict';
 
 	define(function (require) {
@@ -65,7 +50,7 @@
 		}
 
 		function xhr(request) {
-			var d, client, method, url, headers, entity, headerName, response;
+			var d, client, method, url, headers, entity, headerName, response, XMLHttpRequest;
 
 			response = {};
 			response.request = request;
@@ -77,7 +62,11 @@
 
 			d = when.defer();
 
-			client = response.raw = new XMLHttpRequest();
+			XMLHttpRequest = request.engine || global.XMLHttpRequest;
+			if (!XMLHttpRequest) {
+				d.reject({ request: request, error: 'xhr-not-available' });
+				return d.promise;
+			}
 
 			entity = request.entity;
 			request.method = request.method || (entity ? 'POST' : 'GET');
@@ -85,6 +74,7 @@
 			url = new UrlBuilder(request.path || '', request.params).build();
 
 			try {
+				client = response.raw = new XMLHttpRequest();
 				client.open(method, url, true);
 
 				headers = request.headers;
@@ -137,12 +127,16 @@
 			return d.promise;
 		}
 
+		xhr.chain = function (interceptor, config) {
+			return interceptor(xhr, config);
+		};
+
 		return xhr;
 
 	});
 
 }(
 	typeof define === 'function' && define.amd ? define : function (factory) { module.exports = factory(require); },
-	this.XMLHttpRequest
+	this
 	// Boilerplate for AMD and Node
 ));

@@ -35,10 +35,10 @@
 			// cujojs/cola - an IOC-ish data-binding lib (alpha)
 			{ name: 'cola', location: 'lib/cola', main: './cola' },
 
-			// (private) - Spring Integration for Javascript?
-			{ name: 'integration', location: 'lib/integration', main: 'integration' },
+			// cujojs/msgs - Message oriented programming
+			{ name: 'msgs', location: 'lib/msgs', main: 'msgs' },
 
-			// (private) - client-side event capturing
+			// s2js/clicks - client-side event capturing
 			{ name: 'clicks', location: 'lib/clicks', main: 'clicks' }
 		],
 

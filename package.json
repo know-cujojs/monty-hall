@@ -20,14 +20,14 @@
     "baseUrl": "client/lib",
     "dependencies": {
       "curl": "github:cujojs/curl/0.7.3",
-      "when": "github:cujojs/when/1.7.1",
+      "when": "github:cujojs/when/1.8.1",
       "meld": "github:cujojs/meld/1.2.0",
       "poly": "github:cujojs/poly/0.5.1",
-      "rest": "github:s2js/rest/v0.8.4",
-      "clicks": "github:five-eleven/clicks/master",
-      "integration": "github:five-eleven/integration/master",
+      "rest": "github:cujojs/rest/v0.9.0",
+      "clicks": "github:s2js/clicks/v0.1.1",
+      "msgs": "github:cujojs/msgs/v0.3.2",
       "cola": "github:cujojs/cola/master",
-      "wire": "github:cujojs/wire/0.9.1"
+      "wire": "github:cujojs/wire/0.9.3"
     }
   },
   "scripts": {
