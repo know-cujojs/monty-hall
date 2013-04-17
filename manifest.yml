@@ -1,0 +1,8 @@
+---
+applications:
+- name: monty-hall
+  memory: 256M
+  instances: 2
+  url: monty-hall.demo.cujojs.com
+  path: .
+  command: node server/main.js

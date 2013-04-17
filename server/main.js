@@ -4,8 +4,8 @@ var express, path, host, port, app;
 express = require('express');
 
 path = process.env.PWD + '/client';
-host = '127.0.0.1';
-port = 8000;
+host = '0.0.0.0';
+port = process.env.PORT || 8000;
 
 app = express();
 app.configure(function () {
