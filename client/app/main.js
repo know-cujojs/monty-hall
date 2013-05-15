@@ -176,7 +176,7 @@ define({
 	},
 
 	plugins: [
-		{ module: 'wire/debug' },
+		// { module: 'wire/debug' },
 		{ module: 'wire/sizzle', classes: { init: 'loading' }},
 		// { module: 'wire/dom', classes: { init: 'loading' }},
 		{ module: 'wire/dom/render' },
