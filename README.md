@@ -10,6 +10,8 @@ To run:
 * `npm install`
 * `npm start`
 
+Open your browser to http://127.0.0.1:8000
+
 The Monty Hall Demo UI relies on a connection to a RESTful service at
 https://monty-hall.cloudfoundry.com.  If you would like to run the app without
 connecting to a remote server, you may use a mock service by opening
