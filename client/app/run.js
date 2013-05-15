@@ -8,11 +8,6 @@
 		// find AMD plugins here if they're un-pathed
 		pluginPath: 'curl/plugin',
 
-		// any special url remappings would go here
-		paths: {
-			'sizzle': 'lib/sizzle'
-		},
-
 		packages: [
 			// cujojs/curl - a small, fast AMD & CJS module loader
 			{ name: 'curl', location: 'lib/curl/src/curl', main: '../curl' },
@@ -39,7 +34,10 @@
 			{ name: 'msgs', location: 'lib/msgs', main: 'msgs' },
 
 			// s2js/clicks - client-side event capturing
-			{ name: 'clicks', location: 'lib/clicks', main: 'clicks' }
+			{ name: 'clicks', location: 'lib/clicks', main: 'clicks' },
+
+			// sizzle/sizzle - a query selector (for legacy browsers)
+			{ name: 'sizzle', location: 'lib/sizzle', main: 'sizzle' }
 		],
 
 		// ensure we've shimmed the browser before executing any code
