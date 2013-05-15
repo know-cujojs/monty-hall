@@ -1,6 +1,0 @@
-{
-	"name": "clicks",
-	"version": "0.1.1",
-	"main": "./clicks.js",
-	"dependencies": {}
-}

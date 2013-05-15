@@ -1,8 +1,0 @@
-{
-  "name": "meld",
-  "version": "0.0.0",
-  "repository": {
-    "type": "local",
-    "path": "meld"
-  }
-}
