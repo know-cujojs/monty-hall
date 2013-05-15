@@ -10,7 +10,8 @@
 		"rest": "0.9.1",
 		"when": "~1",
 		"wire": "~0",
-		"sizzle": "~1"
+		"sizzle": "~1",
+		"clicks": "~0"
 	},
 	"ignore": [
 		"node_modules/",
