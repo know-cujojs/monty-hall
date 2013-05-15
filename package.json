@@ -1,41 +1,23 @@
 {
-  "name": "goats",
-  "description": "The Monty Hall Problem",
-  "homepage": "",
-  "version": "0.1.0",
-  "keywords": [],
-  "dependencies": {
-    "rest": "",
-    "express": ""
-  },
-  "devDependencies": {
-    "buster": "",
-    "grunt-buster": "",
-    "grunt-css": "",
-    "grunt-html": "",
-    "json5": "",
-    "when": "1.5.x"
-  },
-  "volo": {
-    "baseUrl": "client/lib",
-    "dependencies": {
-      "curl": "github:cujojs/curl/0.7.3",
-      "when": "github:cujojs/when/1.8.1",
-      "meld": "github:cujojs/meld/1.2.0",
-      "poly": "github:cujojs/poly/0.5.1",
-      "rest": "github:cujojs/rest/v0.9.0",
-      "clicks": "github:s2js/clicks/v0.1.1",
-      "msgs": "github:cujojs/msgs/v0.3.2",
-      "cola": "github:cujojs/cola/master",
-      "wire": "github:cujojs/wire/0.9.3"
-    }
-  },
-  "scripts": {
-    "start": "node server/main.js",
-    "test": "buster test"
-  },
-  "engines" : {
-    "node": "0.8.x",
-    "npm": "1.2.x"
-  }
+	"name": "monty-hall",
+	"description": "The Monty Hall Problem",
+	"homepage": "",
+	"version": "0.1.1",
+	"keywords": [],
+	"dependencies": {
+		"serv": ""
+	},
+	"devDependencies": {
+		"bower": "",
+		"buster": ""
+	},
+	"scripts": {
+		"postinstall": "bower install",
+		"start": "serv --port 8000",
+		"test": "buster test"
+	},
+	"engines" : {
+		"node": "0.8.x",
+		"npm": "1.2.x"
+	}
 }
