@@ -40,11 +40,20 @@
 			{ name: 'sizzle', location: 'lib/sizzle', main: 'sizzle' }
 		],
 
+		// prevent auto-sniffing for locale files
+		locale: false,
+
 		// ensure we've shimmed the browser before executing any code
 		preloads: ['poly/all']
 	};
 
 	// bootstrap our app by wiring the main spec
-	curl(config, ['wire!app/main']);
+	curl(config, ['wire!app/main']).then(notify, fail);
+
+	function notify () { console.log('loaded'); }
+	function fail (ex) {
+		console.log('An error occurred while loading.', ex.message);
+		if (ex.stack) console.log(ex.stack);
+	}
 
 })(this.curl);
