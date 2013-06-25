@@ -176,12 +176,9 @@ define({
 	},
 
 	plugins: [
-		// { module: 'wire/debug' },
+		// 'wire/debug',
 		{ module: 'wire/sizzle', classes: { init: 'loading' }},
 		// { module: 'wire/dom', classes: { init: 'loading' }},
-		{ module: 'wire/dom/render' },
-		{ module: 'wire/on' },
-		{ module: 'wire/aop' },
-		{ module: 'cola' }
+		'wire/dom/render', 'wire/on', 'wire/aop', 'cola'
 	]
 });
