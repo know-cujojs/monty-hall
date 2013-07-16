@@ -2,7 +2,7 @@
 applications:
 - name: monty-hall
   buildpack: https://github.com/cloudfoundry/heroku-buildpack-nodejs.git
-  memory: 256M
+  memory: 128M
   instances: 2
   path: .
   command: serv --public client
