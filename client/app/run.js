@@ -37,7 +37,7 @@
 			{ name: 'clicks', location: 'lib/clicks', main: 'clicks' },
 
 			// sizzle/sizzle - a query selector (for legacy browsers)
-			{ name: 'sizzle', location: 'lib/sizzle', main: 'sizzle' }
+			{ name: 'sizzle', location: 'lib/sizzle/dist', main: 'sizzle' }
 		],
 
 		// prevent auto-sniffing for locale files

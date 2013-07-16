@@ -5,19 +5,19 @@
 	"version": "0.1.2",
 	"keywords": [],
 	"dependencies": {
-		"serv": ""
+		"serv": "",
+		"bower": ""
 	},
 	"devDependencies": {
-		"bower": "",
 		"buster": ""
 	},
 	"scripts": {
+		"start": "serv client",
 		"postinstall": "bower install",
-		"start": "serv client --port 8000",
 		"test": "buster test"
 	},
 	"engines" : {
-		"node": "0.8.x",
+		"node": "0.10.x",
 		"npm": "1.2.x"
 	}
 }
